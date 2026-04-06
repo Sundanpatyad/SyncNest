@@ -296,6 +296,13 @@ function showWelcome() {
   el.welcomeScreen.style.display = 'flex';
   el.app.style.display = 'none';
   loadRecentFiles();
+
+  // Trigger local databases background scan
+  if (!_allDiscoveredDbs.length) {
+    runScanning();
+  } else {
+    renderDiscoveryCards(_allDiscoveredDbs);
+  }
 }
 
 async function loadRecentFiles() {
@@ -368,7 +375,7 @@ function renderDiscoveryCards(dbs) {
   filtered.forEach(db => {
     const tpl = document.getElementById('discovery-card-template');
     const card = tpl.content.firstElementChild.cloneNode(true);
-    
+
     // Set Name
     const nameEl = card.querySelector('.dc-name');
     nameEl.textContent = db.name;

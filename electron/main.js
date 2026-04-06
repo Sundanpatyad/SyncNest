@@ -3,6 +3,13 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
+// ─── Firewall & Network Noise Suppression ─────────────────────────────────────
+// Disable common Chromium features that trigger Windows Firewall prompts
+app.commandLine.appendSwitch('disable-features', 'WebRtcHideLocalIpsWithMdns');
+app.commandLine.appendSwitch('disable-device-discovery-notifications');
+app.commandLine.appendSwitch('no-proxy-server');
+app.commandLine.appendSwitch('remote-debugging-port', '0');
+
 let mainWindow;
 let db = null;
 let SQL = null;

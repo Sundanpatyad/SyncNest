@@ -57,84 +57,51 @@
             <p>Drop a <strong>.db</strong> or <strong>.sqlite</strong> file here</p>
           </div>
 
-          <button class="btn-discover" id="btn-show-discover">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <span class="btn-discover-text">
-              <span class="btn-discover-title">Scan for Databases</span>
-              <span class="btn-discover-sub">iOS Simulator · Android · Projects</span>
-            </span>
-            <svg class="btn-discover-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2.5">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
+
         </div>
       </div>
 
       <!-- Recent Files -->
-      <div class="recent-files-section" id="recent-files-section" style="display:none">
+      <!-- <div class="recent-files-section" id="recent-files-section" style="display:none">
         <h3>Recent Files</h3>
         <ul class="recent-list" id="recent-list"></ul>
-      </div>
+      </div> -->
 
-    </div>
-  </div>
-
-  <!-- ═══════════ DATABASE DISCOVERY MODAL ═══════════ -->
-  <div class="modal-overlay" id="discover-modal" style="display:none">
-    <div class="modal modal-discover">
-      <div class="modal-header">
-        <div class="modal-header-left">
-          <div class="modal-header-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </div>
-          <div>
-            <h3>Local Databases</h3>
-            <p class="modal-subtitle">Auto-discovered on this machine</p>
-          </div>
-        </div>
-        <div class="modal-header-right">
-          <span class="scan-badge" id="scan-badge" style="display:none">
-            <span class="scan-dot"></span>Scanning…
-          </span>
-          <button class="btn-ghost btn-sm" id="btn-rescan" title="Re-scan filesystem">
+      <!-- Local Databases -->
+      <div class="local-databases-section" id="local-databases-section">
+        <div class="ld-header">
+          <h3>Local Databases
+            <span id="scan-badge"
+              style="display:none; color:var(--emerald); font-size:11px; margin-left:8px; font-weight:500;">Scanning...</span>
+          </h3>
+          <button class="btn-ghost btn-sm" id="btn-rescan">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <polyline points="23 4 23 10 17 10" />
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
             </svg>
             Re-scan
           </button>
-          <button class="btn-icon" id="btn-close-discover">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
         </div>
-      </div>
-      <div class="modal-discover-search">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input type="text" id="discover-search" placeholder="Filter databases…" autocomplete="off" />
-      </div>
-      <div class="modal-discover-body" id="discovery-list">
-        <div class="discovery-scanning" id="discovery-scanning">
-          <div class="spinner" style="width:20px;height:20px;border-width:2px"></div>
-          <span>Scanning for databases…</span>
+
+        <div class="modal-discover-search" style="margin-bottom: 12px; padding: 0 0 12px 0;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input type="text" id="discover-search" placeholder="Filter local databases…" autocomplete="off" />
         </div>
+
+        <div class="discovery-list-container" id="discovery-list" style="margin-top: 4px;">
+          <div class="discovery-scanning" id="discovery-scanning">
+            <div class="spinner" style="width:20px;height:20px;border-width:2px"></div>
+            <span>Scanning for databases…</span>
+          </div>
+        </div>
+
+        <div style="text-align: right; margin-top: 10px; font-size: 11.5px; color: var(--text-muted);"
+          id="discover-count"></div>
       </div>
-      <div class="modal-discover-footer">
-        <span class="discover-count" id="discover-count"></span>
-        <button class="btn-ghost btn-sm" id="btn-close-discover-footer">Cancel</button>
-      </div>
+
     </div>
   </div>
 
