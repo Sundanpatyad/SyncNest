@@ -12,6 +12,10 @@ contextBridge.exposeInMainWorld('sqlBrowser', {
   getTableData: (opts) => ipcRenderer.invoke('get-table-data', opts),
   getTableSchema: (table) => ipcRenderer.invoke('get-table-schema', table),
 
+  // Edit / Delete rows
+  updateRow: (opts) => ipcRenderer.invoke('update-row', opts),
+  deleteRow: (opts) => ipcRenderer.invoke('delete-row', opts),
+
   // Query
   runQuery: (sql) => ipcRenderer.invoke('run-query', sql),
 

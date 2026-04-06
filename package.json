@@ -1,7 +1,7 @@
 {
-  "name": "sql-browser",
+  "name": "syncnest",
   "version": "1.0.0",
-  "description": "A cross-platform desktop SQL database browser for local SQLite files",
+  "description": "SyncNest — A premium cross-platform desktop SQL database browser for local SQLite files",
   "main": "electron/main.js",
   "scripts": {
     "start": "electron .",
@@ -11,7 +11,7 @@
   },
   "build": {
     "appId": "com.sqlbrowser.app",
-    "productName": "SQL Browser",
+    "productName": "SyncNest",
     "directories": {
       "output": "build"
     },
@@ -40,7 +40,7 @@
     "electron",
     "sql"
   ],
-  "author": "SQL Browser",
+  "author": "SyncNest",
   "license": "MIT",
   "devDependencies": {
     "electron": "^28.3.3",

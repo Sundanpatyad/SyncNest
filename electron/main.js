@@ -62,7 +62,7 @@ function buildMenu() {
       { role: 'togglefullscreen' },
     ]},
     { label: 'Help', submenu: [
-      { label: 'About SQL Browser', click: () => mainWindow.webContents.send('show-about') },
+      { label: 'About SyncNest', click: () => mainWindow.webContents.send('show-about') },
     ]},
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
@@ -287,6 +287,45 @@ ipcMain.handle('export-csv', async (_, { data, filename }) => {
     shell.showItemInFolder(filePath);
     return { success: true, filePath };
   } catch (err) {
+    return { error: err.message };
+  }
+});
+
+// ─── Update Row ───────────────────────────────────────────────────────────────
+ipcMain.handle('update-row', (_, { table, pkColumn, pkValue, updates }) => {
+  if (!db) return { error: 'No database open' };
+  try {
+    const setClauses = Object.keys(updates)
+      .map(col => `"${col}" = ?`)
+      .join(', ');
+    const values = Object.values(updates);
+    values.push(pkValue);
+    db.run(`UPDATE "${table}" SET ${setClauses} WHERE "${pkColumn}" = ?`, values);
+    // Persist change back to file
+    if (currentDbPath) {
+      const data = db.export();
+      fs.writeFileSync(currentDbPath, Buffer.from(data));
+    }
+    return { success: true, changes: db.getRowsModified() };
+  } catch (err) {
+    console.error('[SyncNest] update-row error:', err);
+    return { error: err.message };
+  }
+});
+
+// ─── Delete Row ───────────────────────────────────────────────────────────────
+ipcMain.handle('delete-row', (_, { table, pkColumn, pkValue }) => {
+  if (!db) return { error: 'No database open' };
+  try {
+    db.run(`DELETE FROM "${table}" WHERE "${pkColumn}" = ?`, [pkValue]);
+    // Persist change back to file
+    if (currentDbPath) {
+      const data = db.export();
+      fs.writeFileSync(currentDbPath, Buffer.from(data));
+    }
+    return { success: true, changes: db.getRowsModified() };
+  } catch (err) {
+    console.error('[SyncNest] delete-row error:', err);
     return { error: err.message };
   }
 });
