@@ -1,0 +1,8 @@
+node_modules/
+build/
+dist/
+*.log
+.DS_Store
+out.txt
+test-sql.js
+test-script.js
