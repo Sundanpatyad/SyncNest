@@ -1,301 +1,483 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SyncNest</title>
+  <title>SyncNest — Local Database Explorer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" />
   <link rel="stylesheet" href="styles/main.css" />
 </head>
+
 <body>
 
-<!-- ═══════════ WELCOME SCREEN ═══════════ -->
-<div id="welcome-screen" class="welcome-screen">
-  <div class="welcome-bg-orb orb-1"></div>
-  <div class="welcome-bg-orb orb-2"></div>
-  <div class="welcome-bg-orb orb-3"></div>
+  <!-- ═══════════ WELCOME SCREEN ═══════════ -->
+  <div id="welcome-screen" class="welcome-screen">
 
-  <div class="welcome-content">
-    <div class="welcome-logo">
-      <div class="logo-icon">
-        <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
-          <ellipse cx="24" cy="14" rx="15" ry="6" fill="rgba(255,255,255,0.92)"/>
-          <path d="M9 14 Q9 22 24 25 Q39 22 39 14" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="1.8"/>
-          <path d="M9 22 Q9 30 24 33 Q39 30 39 22" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.8"/>
-          <path d="M9 30 Q9 38 24 41 Q39 38 39 30" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.8"/>
-        </svg>
-      </div>
-      <div class="logo-text">
-        <h1>SyncNest</h1>
-        <p>Local Database Explorer</p>
-      </div>
-    </div>
+    <div class="welcome-content">
 
-    <div class="welcome-actions">
-      <button class="btn-primary btn-large" id="btn-open-welcome">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        Open Database
-      </button>
-      <div class="drop-zone" id="drop-zone">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        <p>Drop a <strong>.db</strong> or <strong>.sqlite</strong> file here</p>
-      </div>
-    </div>
-
-    <div class="recent-files-section" id="recent-files-section" style="display:none">
-      <h3>Recent Files</h3>
-      <ul class="recent-list" id="recent-list"></ul>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════ MAIN APP ═══════════ -->
-<div id="app" class="app" style="display:none">
-
-  <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <div class="sidebar-logo-icon">
-          <svg width="14" height="14" viewBox="0 0 48 48" fill="none">
-            <ellipse cx="24" cy="14" rx="15" ry="6" fill="rgba(255,255,255,0.92)"/>
-            <path d="M9 14 Q9 22 24 25 Q39 22 39 14" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="2"/>
-            <path d="M9 22 Q9 30 24 33 Q39 30 39 22" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+      <!-- Logo -->
+      <div class="welcome-logo">
+        <div class="logo-icon">
+          <svg width="38" height="38" viewBox="0 0 48 48" fill="none">
+            <ellipse cx="24" cy="14" rx="15" ry="6" fill="rgba(255,255,255,0.92)" />
+            <path d="M9 14 Q9 22 24 25 Q39 22 39 14" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="1.8" />
+            <path d="M9 22 Q9 30 24 33 Q39 30 39 22" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.8" />
+            <path d="M9 30 Q9 38 24 41 Q39 38 39 30" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.8" />
           </svg>
         </div>
-        <span class="sidebar-logo-text">SyncNest</span>
-      </div>
-      <button class="btn-icon" id="btn-open-sidebar" title="Open Database (Ctrl+O)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-      </button>
-    </div>
-
-    <div class="db-info-bar" id="db-info-bar">
-      <div class="db-name" id="sidebar-db-name">No database open</div>
-      <div class="db-meta" id="sidebar-db-meta"></div>
-    </div>
-
-    <div class="sidebar-search">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="table-search" placeholder="Filter tables…" />
-    </div>
-
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">
-        Tables
-        <button class="btn-icon sidebar-tables-refresh" id="btn-refresh-tables" title="Refresh table list">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-        </button>
-      </div>
-      <ul class="table-list" id="table-list">
-        <li class="table-list-empty">Open a database to view tables</li>
-      </ul>
-    </nav>
-
-    <div class="sidebar-footer">
-      <button class="btn-ghost btn-sm" id="btn-query-editor">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-        SQL Editor
-      </button>
-      <button class="btn-ghost btn-sm" id="btn-close-db">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        Close
-      </button>
-    </div>
-  </aside>
-
-  <!-- Main Content -->
-  <main class="main-content" id="main-content">
-
-    <!-- Toolbar -->
-    <div class="toolbar" id="toolbar">
-      <div class="toolbar-left">
-        <span class="breadcrumb">
-          <span class="breadcrumb-db" id="breadcrumb-db"></span>
-          <span class="breadcrumb-sep" id="breadcrumb-sep" style="display:none">›</span>
-          <span class="breadcrumb-table" id="breadcrumb-table"></span>
-        </span>
-      </div>
-      <div class="toolbar-right" id="toolbar-actions" style="display:none">
-        <!-- View Toggle -->
-        <div class="view-toggle" id="view-toggle">
-          <button class="view-toggle-btn active" id="btn-view-table" title="Table View">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
-            Table
-          </button>
-          <button class="view-toggle-btn" id="btn-view-doc" title="Document View">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            Document
-          </button>
-        </div>
-        <input type="text" class="search-input" id="data-search" placeholder="Search…" />
-        <button class="btn-secondary btn-sm" id="btn-refresh">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Refresh
-        </button>
-        <button class="btn-secondary btn-sm" id="btn-schema">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-          Schema
-        </button>
-        <button class="btn-primary btn-sm" id="btn-export">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export CSV
-        </button>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div class="empty-state" id="empty-state">
-      <div class="empty-icon">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" style="color:var(--text-muted)">
-          <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-        </svg>
-      </div>
-      <h2>No table selected</h2>
-      <p>Choose a table from the sidebar to explore your data, or open the SQL editor to run a custom query.</p>
-      <button class="btn-primary" id="btn-open-editor-empty">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-        Open SQL Editor
-      </button>
-    </div>
-
-    <!-- Data View -->
-    <div class="data-view" id="data-view" style="display:none">
-      <!-- Stats Bar -->
-      <div class="table-stats-bar">
-        <span class="table-stats-text" id="table-stats"></span>
-        <span class="table-stats-badge" id="table-stats-badge">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>
-          Ready
-        </span>
-      </div>
-
-      <!-- TABLE view -->
-      <div class="table-wrapper" id="table-wrapper">
-        <table class="data-table" id="data-table">
-          <thead id="data-thead"></thead>
-          <tbody id="data-tbody"></tbody>
-        </table>
-        <div class="table-loading" id="table-loading" style="display:none">
-          <div class="spinner"></div>
+        <div class="logo-text">
+          <h1>SyncNest</h1>
+          <p>Local Database Explorer</p>
         </div>
       </div>
 
-      <!-- DOCUMENT view -->
-      <div class="document-wrapper" id="document-wrapper" style="display:none"></div>
+      <!-- Actions row -->
+      <div class="welcome-actions">
+        <button class="btn-primary btn-large" id="btn-open-welcome">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          </svg>
+          Open Database File
+        </button>
 
-      <!-- Pagination -->
-      <div class="pagination" id="pagination"></div>
-    </div>
+        <div class="welcome-actions-row">
+          <div class="drop-zone" id="drop-zone">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <p>Drop a <strong>.db</strong> or <strong>.sqlite</strong> file here</p>
+          </div>
 
-    <!-- Schema View -->
-    <div class="schema-view" id="schema-view" style="display:none">
-      <div class="schema-header">
-        <h3 id="schema-title">Schema</h3>
-        <button class="btn-ghost btn-sm" id="btn-close-schema">✕ Close</button>
+          <button class="btn-discover" id="btn-show-discover">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span class="btn-discover-text">
+              <span class="btn-discover-title">Scan for Databases</span>
+              <span class="btn-discover-sub">iOS Simulator · Android · Projects</span>
+            </span>
+            <svg class="btn-discover-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
       </div>
-      <div class="schema-body" id="schema-body"></div>
-    </div>
 
-    <!-- Query Editor -->
-    <div class="query-view" id="query-view" style="display:none">
-      <div class="query-editor-panel">
-        <div class="query-toolbar">
-          <span class="panel-title">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-            SQL Editor
-          </span>
-          <div class="query-toolbar-right">
-            <span class="query-hint">Ctrl+Enter to run</span>
-            <button class="btn-primary btn-sm" id="btn-run-query">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-              Run
-            </button>
-            <button class="btn-ghost btn-sm" id="btn-close-query">✕</button>
+      <!-- Recent Files -->
+      <div class="recent-files-section" id="recent-files-section" style="display:none">
+        <h3>Recent Files</h3>
+        <ul class="recent-list" id="recent-list"></ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════ DATABASE DISCOVERY MODAL ═══════════ -->
+  <div class="modal-overlay" id="discover-modal" style="display:none">
+    <div class="modal modal-discover">
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-header-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </div>
+          <div>
+            <h3>React Native Databases</h3>
+            <p class="modal-subtitle">Auto-discovered on this machine</p>
           </div>
         </div>
-        <div id="codemirror-container"></div>
-      </div>
-      <div class="query-results-panel" id="query-results-panel">
-        <div class="results-toolbar">
-          <span class="panel-title" id="results-title">Results</span>
-          <button class="btn-secondary btn-sm" id="btn-export-query" style="display:none">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export CSV
+        <div class="modal-header-right">
+          <span class="scan-badge" id="scan-badge" style="display:none">
+            <span class="scan-dot"></span>Scanning…
+          </span>
+          <button class="btn-ghost btn-sm" id="btn-rescan" title="Re-scan filesystem">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            Re-scan
+          </button>
+          <button class="btn-icon" id="btn-close-discover">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
-        <div class="query-results-body" id="query-results-body">
-          <div class="results-empty">Run a query to see results here</div>
+      </div>
+      <div class="modal-discover-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input type="text" id="discover-search" placeholder="Filter databases…" autocomplete="off" />
+      </div>
+      <div class="modal-discover-body" id="discovery-list">
+        <div class="discovery-scanning" id="discovery-scanning">
+          <div class="spinner" style="width:20px;height:20px;border-width:2px"></div>
+          <span>Scanning for React Native databases…</span>
         </div>
       </div>
+      <div class="modal-discover-footer">
+        <span class="discover-count" id="discover-count"></span>
+        <button class="btn-ghost btn-sm" id="btn-close-discover-footer">Cancel</button>
+      </div>
     </div>
+  </div>
 
-  </main>
-</div>
+  <!-- ═══════════ MAIN APP ═══════════ -->
+  <div id="app" class="app" style="display:none">
 
-<!-- Toast container -->
-<div class="toast-container" id="toast-container"></div>
-
-<!-- Edit Row Modal -->
-<div class="modal-overlay" id="edit-modal" style="display:none">
-  <div class="modal modal-edit">
-    <div class="modal-header">
-      <h3 id="edit-modal-title">Edit Row</h3>
-      <button class="btn-icon" id="btn-close-edit-modal">✕</button>
-    </div>
-    <div class="modal-body edit-modal-body" id="edit-modal-body"></div>
-    <div class="modal-footer">
-      <button class="btn-danger btn-sm" id="btn-delete-row">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        Delete Row
-      </button>
-      <div class="modal-footer-right">
-        <button class="btn-ghost btn-sm" id="btn-cancel-edit">Cancel</button>
-        <button class="btn-primary btn-sm" id="btn-update-row">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13"/><polyline points="7 3 7 8 15 8"/></svg>
-          Update
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg width="14" height="14" viewBox="0 0 48 48" fill="none">
+              <ellipse cx="24" cy="14" rx="15" ry="6" fill="rgba(255,255,255,0.92)" />
+              <path d="M9 14 Q9 22 24 25 Q39 22 39 14" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="2" />
+              <path d="M9 22 Q9 30 24 33 Q39 30 39 22" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" />
+            </svg>
+          </div>
+          <span class="sidebar-logo-text">SyncNest</span>
+        </div>
+        <button class="btn-icon" id="btn-open-sidebar" title="Open Database (Ctrl+O)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          </svg>
         </button>
       </div>
-    </div>
-  </div>
-</div>
 
-<!-- About Modal -->
-<div class="modal-overlay" id="about-modal" style="display:none">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>About SyncNest</h3>
-      <button class="btn-icon" id="btn-close-about">✕</button>
-    </div>
-    <div class="modal-body about-body">
-      <div class="about-logo">
-        <div class="about-logo-icon">
-          <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
-            <ellipse cx="24" cy="14" rx="15" ry="6" fill="rgba(255,255,255,0.92)"/>
-            <path d="M9 14 Q9 22 24 25 Q39 22 39 14" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="2"/>
-            <path d="M9 22 Q9 30 24 33 Q39 30 39 22" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2"/>
+      <div class="db-info-bar" id="db-info-bar">
+        <div class="db-name" id="sidebar-db-name">No database open</div>
+        <div class="db-meta" id="sidebar-db-meta"></div>
+      </div>
+
+      <div class="sidebar-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input type="text" id="table-search" placeholder="Filter tables…" />
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">
+          Tables
+          <button class="btn-icon sidebar-tables-refresh" id="btn-refresh-tables" title="Refresh table list">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+          </button>
+        </div>
+        <ul class="table-list" id="table-list">
+          <li class="table-list-empty">Open a database to view tables</li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-ghost btn-sm" id="btn-query-editor">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="4 17 10 11 4 5" />
+            <line x1="12" y1="19" x2="20" y2="19" />
           </svg>
+          SQL Editor
+        </button>
+        <button class="btn-ghost btn-sm" id="btn-close-db">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+          Close
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+
+      <!-- Toolbar (breadcrumb only) -->
+      <div class="toolbar" id="toolbar">
+        <div class="toolbar-left">
+          <span class="breadcrumb">
+            <span class="breadcrumb-db" id="breadcrumb-db"></span>
+            <span class="breadcrumb-sep" id="breadcrumb-sep" style="display:none">›</span>
+            <span class="breadcrumb-table" id="breadcrumb-table"></span>
+          </span>
         </div>
       </div>
-      <h2>SyncNest</h2>
-      <p class="about-version">Version 1.0.0</p>
-      <p class="about-desc">A beautiful cross-platform SQLite browser. Open any local .db or .sqlite file and explore your data with Table or Document views. Edit and delete records inline.</p>
-      <div class="about-features">
-        <div class="about-feature">📂 Open any SQLite file</div>
-        <div class="about-feature">📊 Table &amp; Document views</div>
-        <div class="about-feature">🔍 SQL query editor</div>
-        <div class="about-feature">📤 CSV export</div>
+
+      <!-- dummy anchor so JS doesn't error on el.toolbarActions -->
+      <span id="toolbar-actions" style="display:none"></span>
+
+
+      <!-- Empty State -->
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8"
+            style="color:var(--text-muted)">
+            <ellipse cx="12" cy="5" rx="9" ry="3" />
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+          </svg>
+        </div>
+        <h2>No table selected</h2>
+        <p>Choose a table from the sidebar to explore your data, or open the SQL editor to run a custom query.</p>
+        <button class="btn-primary" id="btn-open-editor-empty">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="4 17 10 11 4 5" />
+            <line x1="12" y1="19" x2="20" y2="19" />
+          </svg>
+          Open SQL Editor
+        </button>
+      </div>
+
+      <!-- Data View -->
+      <div class="data-view" id="data-view" style="display:none">
+
+        <!-- ═══ ACTION BAR (lives inside data-view, always visible with it) ═══ -->
+        <div class="action-bar">
+          <!-- Left: View toggle + search -->
+          <div class="action-bar-left">
+            <div class="view-toggle" id="view-toggle">
+              <button class="view-toggle-btn active" id="btn-view-table" title="Table View">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <line x1="3" y1="9" x2="21" y2="9"/>
+                  <line x1="3" y1="15" x2="21" y2="15"/>
+                  <line x1="9" y1="3" x2="9" y2="21"/>
+                </svg>
+                Table
+              </button>
+              <button class="view-toggle-btn" id="btn-view-doc" title="Document View">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                Document
+              </button>
+            </div>
+
+            <div class="action-bar-divider"></div>
+
+            <div class="action-search-wrap">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="search-input" id="data-search" placeholder="Search rows…" />
+            </div>
+          </div>
+
+          <!-- Right: Action buttons -->
+          <div class="action-bar-right">
+            <button class="action-btn" id="btn-refresh" title="Reload current table data">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              Refresh
+            </button>
+            <button class="action-btn" id="btn-schema" title="View table schema">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+              Schema
+            </button>
+            <div class="action-bar-divider"></div>
+            <button class="action-btn action-btn-primary" id="btn-export" title="Export table to CSV">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="table-stats-bar">
+          <span class="table-stats-text" id="table-stats"></span>
+          <span class="table-stats-badge" id="table-stats-badge">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>
+            Ready
+          </span>
+        </div>
+
+        <!-- TABLE view -->
+        <div class="table-wrapper" id="table-wrapper">
+          <table class="data-table" id="data-table">
+            <thead id="data-thead"></thead>
+            <tbody id="data-tbody"></tbody>
+          </table>
+          <div class="table-loading" id="table-loading" style="display:none">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+        <!-- DOCUMENT view -->
+        <div class="document-wrapper" id="document-wrapper" style="display:none"></div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+      </div>
+
+      <!-- Schema View -->
+      <div class="schema-view" id="schema-view" style="display:none">
+        <!-- Schema Header Bar -->
+        <div class="schema-header-bar">
+          <div class="schema-header-left">
+            <button class="schema-back-btn" id="btn-close-schema" title="Back to data view">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <div class="schema-header-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            </div>
+            <div class="schema-header-info">
+              <span class="schema-header-label">Schema</span>
+              <span class="schema-header-table" id="schema-title">—</span>
+            </div>
+          </div>
+          <div class="schema-header-right">
+            <span class="schema-stat-chip" id="schema-col-chip" style="display:none">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <span id="schema-col-count">0</span> columns
+            </span>
+            <span class="schema-stat-chip schema-stat-chip-idx" id="schema-idx-chip" style="display:none">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <span id="schema-idx-count">0</span> indexes
+            </span>
+            <button class="action-btn" id="btn-close-schema-top" title="Close schema">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Close
+            </button>
+          </div>
+        </div>
+        <div class="schema-body" id="schema-body"></div>
+      </div>
+
+
+      <!-- Query Editor -->
+      <div class="query-view" id="query-view" style="display:none">
+        <div class="query-editor-panel">
+          <div class="query-toolbar">
+            <span class="panel-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="4 17 10 11 4 5" />
+                <line x1="12" y1="19" x2="20" y2="19" />
+              </svg>
+              SQL Editor
+            </span>
+            <div class="query-toolbar-right">
+              <span class="query-hint">Ctrl+Enter to run</span>
+              <button class="btn-primary btn-sm" id="btn-run-query">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5,3 19,12 5,21" />
+                </svg>
+                Run
+              </button>
+              <button class="btn-ghost btn-sm" id="btn-close-query">✕</button>
+            </div>
+          </div>
+          <div id="codemirror-container"></div>
+        </div>
+        <div class="query-results-panel" id="query-results-panel">
+          <div class="results-toolbar">
+            <span class="panel-title" id="results-title">Results</span>
+            <button class="btn-secondary btn-sm" id="btn-export-query" style="display:none">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Export CSV
+            </button>
+          </div>
+          <div class="query-results-body" id="query-results-body">
+            <div class="results-empty">Run a query to see results here</div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Edit Row Modal -->
+  <div class="modal-overlay" id="edit-modal" style="display:none">
+    <div class="modal modal-edit">
+      <div class="modal-header">
+        <h3 id="edit-modal-title">Edit Row</h3>
+        <button class="btn-icon" id="btn-close-edit-modal">✕</button>
+      </div>
+      <div class="modal-body edit-modal-body" id="edit-modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn-danger btn-sm" id="btn-delete-row">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+          </svg>
+          Delete Row
+        </button>
+        <div class="modal-footer-right">
+          <button class="btn-ghost btn-sm" id="btn-cancel-edit">Cancel</button>
+          <button class="btn-primary btn-sm" id="btn-update-row">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            Update
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
-<script src="js/app.js"></script>
+  <!-- About Modal -->
+  <div class="modal-overlay" id="about-modal" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>About SyncNest</h3>
+        <button class="btn-icon" id="btn-close-about">✕</button>
+      </div>
+      <div class="modal-body about-body">
+        <div class="about-logo">
+          <div class="about-logo-icon">
+            <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+              <ellipse cx="24" cy="14" rx="15" ry="6" fill="rgba(255,255,255,0.92)" />
+              <path d="M9 14 Q9 22 24 25 Q39 22 39 14" fill="none" stroke="rgba(255,255,255,0.65)" stroke-width="2" />
+              <path d="M9 22 Q9 30 24 33 Q39 30 39 22" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2" />
+            </svg>
+          </div>
+        </div>
+        <h2>SyncNest</h2>
+        <p class="about-version">Version 1.0.0</p>
+        <p class="about-desc">A beautiful cross-platform SQLite browser. Open any local .db or .sqlite file and explore
+          your data with Table or Document views. Edit and delete records inline.</p>
+        <div class="about-features">
+          <div class="about-feature">📂 Open any SQLite file</div>
+          <div class="about-feature">📊 Table &amp; Document views</div>
+          <div class="about-feature">🔍 SQL query editor</div>
+          <div class="about-feature">📤 CSV export</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+  <script src="js/app.js"></script>
 </body>
+
 </html>

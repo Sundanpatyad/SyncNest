@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const path = require('path');
-const fs = require('fs');
+const fs   = require('fs');
+const os   = require('os');
 
 let mainWindow;
 let db = null;
@@ -118,19 +119,232 @@ function getTablesInfo() {
   });
 }
 
+// ─── DB Scanner + File Watcher ────────────────────────────────────────────────
+const HOME      = os.homedir();
+const PLATFORM  = process.platform;
+const DB_EXTS   = new Set(['.db', '.sqlite', '.sqlite3', '.db3', '.s3db', '.sl3']);
+const SKIP_DIRS = new Set([
+  'node_modules', '.git', '.npm', '.yarn', 'cache', 'Cache', 'Caches',
+  'Logs', 'logs', 'Temp', 'temp', 'tmp', '__pycache__', 'vendor',
+  'Windows', 'Microsoft', 'Google', 'Mozilla',
+]);
+
+let isScanning = false;
+let dbWatcher  = null;
+let watchTimer = null;
+
+function isSqliteFile(fp) {
+  try {
+    const fd  = fs.openSync(fp, 'r');
+    const buf = Buffer.alloc(16);
+    fs.readSync(fd, buf, 0, 16, 0);
+    fs.closeSync(fd);
+    return buf.slice(0, 15).toString('latin1') === 'SQLite format 3';
+  } catch(e) { return false; }
+}
+
+function scanDir(dir, maxDepth, depth, source, results) {
+  if (depth > maxDepth) return;
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); }
+  catch(e) { return; }
+  for (const e of entries) {
+    if (SKIP_DIRS.has(e.name)) continue;
+    if (e.name.startsWith('.') && depth > 0) continue;
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) {
+      scanDir(full, maxDepth, depth + 1, source, results);
+    } else if (e.isFile()) {
+      const ext = path.extname(e.name).toLowerCase();
+      if (!DB_EXTS.has(ext)) continue;
+      try {
+        const st = fs.statSync(full);
+        if (st.size < 100 || !isSqliteFile(full)) continue;
+        results.push({ path: full, name: e.name, size: st.size, source,
+          device: null, appName: null,
+          modified: st.mtime.toISOString(), modifiedMs: st.mtimeMs });
+      } catch(e2) {}
+    }
+  }
+}
+
+function scanIosSimulator(results) {
+  const devicesRoot = path.join(HOME, 'Library/Developer/CoreSimulator/Devices');
+  if (!fs.existsSync(devicesRoot)) return;
+  let deviceDirs;
+  try { deviceDirs = fs.readdirSync(devicesRoot); } catch(e) { return; }
+
+  for (const deviceId of deviceDirs) {
+    const devicePath = path.join(devicesRoot, deviceId);
+    let deviceName = 'Simulator';
+    try {
+      const plist = fs.readFileSync(path.join(devicePath, 'device.plist'), 'utf8');
+      const m = plist.match(/<key>name<\/key>\s*<string>([^<]+)<\/string>/);
+      if (m) deviceName = m[1];
+    } catch(e) {}
+
+    // Build app-id → app-name map
+    const appNameMap = {};
+    try {
+      const bundleRoot = path.join(devicePath, 'data/Containers/Bundle/Application');
+      if (fs.existsSync(bundleRoot)) {
+        for (const bundleId of fs.readdirSync(bundleRoot)) {
+          try {
+            const dotApp = fs.readdirSync(path.join(bundleRoot, bundleId)).find(f => f.endsWith('.app'));
+            if (dotApp) appNameMap[bundleId] = dotApp.replace('.app', '');
+          } catch(e) {}
+        }
+      }
+    } catch(e) {}
+
+    const appsRoot = path.join(devicePath, 'data/Containers/Data/Application');
+    if (!fs.existsSync(appsRoot)) continue;
+    let appIds;
+    try { appIds = fs.readdirSync(appsRoot); } catch(e) { continue; }
+
+    for (const appId of appIds) {
+      const appPath = path.join(appsRoot, appId);
+      for (const sub of ['Documents', 'Library', 'Library/LocalDatabase', 'tmp']) {
+        const subPath = path.join(appPath, sub);
+        if (!fs.existsSync(subPath)) continue;
+        let files;
+        try { files = fs.readdirSync(subPath); } catch(e) { continue; }
+        for (const file of files) {
+          if (!DB_EXTS.has(path.extname(file).toLowerCase())) continue;
+          const full = path.join(subPath, file);
+          try {
+            const st = fs.statSync(full);
+            if (st.size < 100 || !isSqliteFile(full)) continue;
+            results.push({
+              path: full, name: file, size: st.size,
+              source: 'iOS Simulator',
+              device: deviceName,
+              appName: appNameMap[appId] || appId.slice(0, 8),
+              modified: st.mtime.toISOString(), modifiedMs: st.mtimeMs,
+            });
+          } catch(e) {}
+        }
+      }
+    }
+  }
+}
+
+function scanAndroidEmulator(results) {
+  const avdRoot = path.join(HOME, '.android', 'avd');
+  if (!fs.existsSync(avdRoot)) return;
+  let avds;
+  try { avds = fs.readdirSync(avdRoot); } catch(e) { return; }
+  for (const avd of avds) {
+    if (!avd.endsWith('.avd')) continue;
+    const dbRoot = path.join(avdRoot, avd, 'data', 'data');
+    if (!fs.existsSync(dbRoot)) continue;
+    let packages;
+    try { packages = fs.readdirSync(dbRoot); } catch(e) { continue; }
+    for (const pkg of packages) {
+      const dbDir = path.join(dbRoot, pkg, 'databases');
+      if (!fs.existsSync(dbDir)) continue;
+      let files;
+      try { files = fs.readdirSync(dbDir); } catch(e) { continue; }
+      for (const file of files) {
+        if (!DB_EXTS.has(path.extname(file).toLowerCase())) continue;
+        const full = path.join(dbDir, file);
+        try {
+          const st = fs.statSync(full);
+          if (st.size < 100 || !isSqliteFile(full)) continue;
+          results.push({
+            path: full, name: file, size: st.size,
+            source: 'Android Emulator',
+            device: avd.replace('.avd', ''),
+            appName: pkg,
+            modified: st.mtime.toISOString(), modifiedMs: st.mtimeMs,
+          });
+        } catch(e) {}
+      }
+    }
+  }
+}
+
+function scanForDatabases() {
+  if (isScanning) return { databases: [], scanning: true };
+  isScanning = true;
+  const results = [];
+  try {
+    if (PLATFORM === 'darwin') scanIosSimulator(results);
+    scanAndroidEmulator(results);
+    const generalPaths = PLATFORM === 'darwin'
+      ? [
+          { root: path.join(HOME, 'Desktop'),    depth: 3, source: 'Desktop' },
+          { root: path.join(HOME, 'Documents'),   depth: 4, source: 'Documents' },
+          { root: path.join(HOME, 'Downloads'),   depth: 3, source: 'Downloads' },
+          { root: path.join(HOME, 'Developer'),   depth: 4, source: 'Developer' },
+          { root: path.join(HOME, 'Projects'),    depth: 4, source: 'Projects' },
+          { root: path.join(HOME, 'Library/Application Support'), depth: 4, source: 'App Support' },
+        ]
+      : [
+          { root: path.join(HOME, 'Desktop'),    depth: 3, source: 'Desktop' },
+          { root: path.join(HOME, 'Documents'),   depth: 4, source: 'Documents' },
+          { root: path.join(HOME, 'Downloads'),   depth: 3, source: 'Downloads' },
+          { root: path.join(HOME, 'source'),      depth: 4, source: 'Projects' },
+          { root: path.join(HOME, 'Projects'),    depth: 4, source: 'Projects' },
+          { root: path.join(HOME, 'repos'),       depth: 4, source: 'Projects' },
+          { root: process.env.APPDATA    || '',   depth: 3, source: 'AppData (Roaming)' },
+          { root: process.env.LOCALAPPDATA || '', depth: 3, source: 'AppData (Local)' },
+        ];
+    for (const p of generalPaths) {
+      if (!p.root || !fs.existsSync(p.root)) continue;
+      scanDir(p.root, p.depth, 0, p.source, results);
+    }
+  } catch(e) { console.error('[SyncNest] scan error:', e); }
+
+  const seen = new Set();
+  const unique = results.filter(r => { if (seen.has(r.path)) return false; seen.add(r.path); return true; });
+  unique.sort((a, b) => b.modifiedMs - a.modifiedMs);
+  isScanning = false;
+  console.log(`[SyncNest] Scan complete — ${unique.length} database(s) found`);
+  return { databases: unique };
+}
+
+function stopFileWatcher() {
+  clearTimeout(watchTimer);
+  if (dbWatcher) { try { dbWatcher.close(); } catch(e) {} dbWatcher = null; }
+}
+
+function startFileWatcher(filePath) {
+  stopFileWatcher();
+  try {
+    dbWatcher = fs.watch(filePath, (eventType) => {
+      if (eventType !== 'change') return;
+      clearTimeout(watchTimer);
+      watchTimer = setTimeout(() => {
+        try {
+          if (!fs.existsSync(filePath)) return;
+          const buf = fs.readFileSync(filePath);
+          const newDb = new SQL.Database(buf);
+          if (db) try { db.close(); } catch(e) {}
+          db = newDb;
+          console.log('[SyncNest] DB reloaded — external change detected');
+          if (mainWindow) mainWindow.webContents.send('db-file-changed');
+        } catch(err) { console.error('[SyncNest] watch reload error:', err); }
+      }, 600);
+    });
+    console.log('[SyncNest] Watching for changes:', filePath);
+  } catch(e) { console.error('[SyncNest] Cannot watch file:', e); }
+}
+
 // ─── Open / Close DB ──────────────────────────────────────────────────────────
 function closeDatabase() {
+  stopFileWatcher();
   if (db) {
     try { db.close(); } catch(e) {}
     db = null;
     currentDbPath = null;
     mainWindow.webContents.send('db-closed');
-    console.log('[SQL Browser] Database closed');
+    console.log('[SyncNest] Database closed');
   }
 }
 
 function openDatabase(filePath) {
-  console.log('[SQL Browser] Opening DB:', filePath);
+  console.log('[SyncNest] Opening DB:', filePath);
 
   if (!SQL) {
     const msg = 'Database engine is still loading, please try again in a moment.';
@@ -144,7 +358,8 @@ function openDatabase(filePath) {
     return { success: false, error: msg };
   }
 
-  // Close existing db first (silently, then reopen)
+  // Close existing db + watcher first
+  stopFileWatcher();
   if (db) {
     try { db.close(); } catch(e) {}
     db = null;
@@ -157,9 +372,10 @@ function openDatabase(filePath) {
     db = new SQL.Database(filebuffer);
     currentDbPath = filePath;
     addRecentFile(filePath);
+    startFileWatcher(filePath);   // ◀ watch for external changes
 
     const tables = getTablesInfo();
-    console.log('[SQL Browser] Tables found:', tables.map(t => t.name));
+    console.log('[SyncNest] Tables found:', tables.map(t => t.name));
 
     mainWindow.webContents.send('db-opened', {
       path: filePath,
@@ -168,7 +384,7 @@ function openDatabase(filePath) {
     });
     return { success: true };
   } catch (err) {
-    console.error('[SQL Browser] Error opening DB:', err);
+    console.error('[SyncNest] Error opening DB:', err);
     mainWindow.webContents.send('db-error', err.message);
     return { success: false, error: err.message };
   }
@@ -345,10 +561,13 @@ ipcMain.handle('get-db-info', () => {
   }
 });
 
+ipcMain.handle('scan-databases', () => scanForDatabases());
+
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
+  stopFileWatcher();
   if (db) try { db.close(); } catch(e) {}
   if (process.platform !== 'darwin') app.quit();
 });

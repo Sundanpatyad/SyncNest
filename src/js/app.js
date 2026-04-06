@@ -67,6 +67,11 @@ const el = {
   schemaTitle:        $('schema-title'),
   schemaBody:         $('schema-body'),
   btnCloseSchema:     $('btn-close-schema'),
+  btnCloseSchemaTop:  $('btn-close-schema-top'),
+  schemaColChip:      $('schema-col-chip'),
+  schemaColCount:     $('schema-col-count'),
+  schemaIdxChip:      $('schema-idx-chip'),
+  schemaIdxCount:     $('schema-idx-count'),
   btnRunQuery:        $('btn-run-query'),
   btnCloseQuery:      $('btn-close-query'),
   btnExportQuery:     $('btn-export-query'),
@@ -76,6 +81,16 @@ const el = {
   aboutModal:         $('about-modal'),
   btnCloseAbout:      $('btn-close-about'),
   toastContainer:     $('toast-container'),
+  // Discovery UI (now in modal)
+  discoverModal:      $('discover-modal'),
+  btnShowDiscover:    $('btn-show-discover'),
+  btnCloseDiscover:   $('btn-close-discover'),
+  btnCloseDiscoverFooter: $('btn-close-discover-footer'),
+  discoverSearch:     $('discover-search'),
+  discoveryList:      $('discovery-list'),
+  scanBadge:          $('scan-badge'),
+  btnRescan:          $('btn-rescan'),
+  discoverCount:      $('discover-count'),
   // Edit modal
   editModal:          $('edit-modal'),
   editModalTitle:     $('edit-modal-title'),
@@ -261,13 +276,149 @@ function showView(view) {
   el.schemaView.style.display     = 'none';
   el.queryView.style.display      = 'none';
   el.toolbarActions.style.display = 'none';
-  if (view === 'empty')  el.emptyState.style.display     = 'flex';
-  if (view === 'data')  { el.dataView.style.display      = 'flex'; el.toolbarActions.style.display = 'flex'; }
-  if (view === 'schema') el.schemaView.style.display     = 'flex';
-  if (view === 'query') { el.queryView.style.display     = 'flex'; initEditor(); }
+  if (view === 'empty')  { el.emptyState.style.display   = 'flex'; }
+  if (view === 'data')   { el.dataView.style.display     = 'flex'; el.toolbarActions.style.display = 'flex'; }
+  if (view === 'schema') { el.schemaView.style.display   = 'flex'; el.toolbarActions.style.display = 'flex'; }
+  if (view === 'query')  { el.queryView.style.display    = 'flex'; initEditor(); }
 }
 function showApp()     { el.welcomeScreen.style.display='none'; el.app.style.display='flex'; showView('empty'); }
-function showWelcome() { el.welcomeScreen.style.display='flex'; el.app.style.display='none'; loadRecentFiles(); }
+
+// ─── Welcome & Recent ─────────────────────────────────────────────────────────
+function showWelcome() {
+  el.emptyState.style.display   = 'flex';
+  el.dataView.style.display     = 'none';
+  el.schemaView.style.display   = 'none';
+  el.queryView.style.display    = 'none';
+  el.toolbarActions.style.visibility = 'hidden';
+  el.breadcrumbDb.textContent   = '';
+  el.breadcrumbTable.textContent= '';
+  el.breadcrumbSep.style.display= 'none';
+  el.welcomeScreen.style.display='flex';
+  el.app.style.display='none';
+  loadRecentFiles();
+}
+
+async function loadRecentFiles() {
+  const files = await window.sqlBrowser.getRecentFiles();
+  el.recentList.innerHTML = '';
+  if (files && files.length > 0) {
+    el.recentSection.style.display = 'block';
+    files.forEach(function(f) {
+      const li = document.createElement('li');
+      li.className = 'recent-item';
+      li.innerHTML = '<div class="recent-file-info"><div class="recent-file-name">' + esc(f.name) + '</div><div class="recent-file-path">&lrm;' + esc(f.path) + '</div></div>';
+      li.addEventListener('click', function() { window.sqlBrowser.openDatabase(f.path); });
+      el.recentList.appendChild(li);
+    });
+  } else {
+    el.recentSection.style.display = 'none';
+  }
+}
+
+// ─── DB Auto-Discovery Modal ─────────────────────────────────────────────────
+let _allDiscoveredDbs = [];
+
+function openDiscoverModal() {
+  el.discoverModal.style.display = 'flex';
+  el.discoverSearch.value = '';
+  // Only scan if list is empty or shows scanning state
+  if (!_allDiscoveredDbs.length) {
+    el.discoveryList.innerHTML = '<div class="discovery-scanning"><div class="spinner" style="width:20px;height:20px;border-width:2px"></div><span>Scanning for React Native databases…</span></div>';
+    el.discoverCount.textContent = '';
+    runScanning();
+  } else {
+    renderDiscoveryCards(_allDiscoveredDbs);
+  }
+}
+
+function closeDiscoverModal() {
+  el.discoverModal.style.display = 'none';
+}
+
+async function runScanning() {
+  el.scanBadge.style.display = 'inline-flex';
+  const result = await window.sqlBrowser.scanDatabases();
+  el.scanBadge.style.display = 'none';
+  _allDiscoveredDbs = (result && result.databases) ? result.databases : [];
+  renderDiscoveryCards(_allDiscoveredDbs);
+}
+
+function renderDiscoveryCards(dbs) {
+  const query = el.discoverSearch ? el.discoverSearch.value.trim().toLowerCase() : '';
+  const filtered = query ? dbs.filter(db =>
+    db.name.toLowerCase().includes(query) ||
+    (db.appName && db.appName.toLowerCase().includes(query)) ||
+    db.path.toLowerCase().includes(query)
+  ) : dbs;
+
+  el.discoverCount.textContent = filtered.length + ' database' + (filtered.length !== 1 ? 's' : '') + ' found';
+
+  if (!filtered.length) {
+    el.discoveryList.innerHTML =
+      '<div class="discovery-empty">' +
+        '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>' +
+        (query ? 'No databases matching "' + esc(query) + '"' : 'No React Native databases found automatically.') +
+      '</div>';
+    return;
+  }
+
+  el.discoveryList.innerHTML = '';
+  filtered.forEach(db => {
+    const card = document.createElement('div');
+    card.className = 'discovery-card';
+    const mb = (db.size / 1024 / 1024).toFixed(2);
+    const sizeStr = mb > 0.1 ? mb + ' MB' : (db.size / 1024).toFixed(0) + ' KB';
+    const appStr = db.appName
+      ? '<div class="dc-app"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>' + esc(db.appName) + '</div>'
+      : '';
+
+    card.innerHTML =
+      '<div class="dc-top">' +
+        '<div class="dc-name">' + esc(db.name) + '</div>' +
+        '<div class="dc-source-badge">' + esc(db.source) + '</div>' +
+      '</div>' +
+      appStr +
+      '<div class="dc-bottom">' +
+        '<div class="dc-size">' + sizeStr + '</div>' +
+      '</div>' +
+      '<div class="dc-path" title="' + esc(db.path) + '">' + esc(db.path) + '</div>';
+
+    card.addEventListener('click', () => {
+      window.sqlBrowser.openDatabase(db.path);
+      closeDiscoverModal();
+    });
+    el.discoveryList.appendChild(card);
+  });
+}
+
+// Discover modal wiring
+if (el.btnShowDiscover) {
+  el.btnShowDiscover.addEventListener('click', openDiscoverModal);
+}
+if (el.btnCloseDiscover) {
+  el.btnCloseDiscover.addEventListener('click', closeDiscoverModal);
+}
+if (el.btnCloseDiscoverFooter) {
+  el.btnCloseDiscoverFooter.addEventListener('click', closeDiscoverModal);
+}
+if (el.discoverModal) {
+  el.discoverModal.addEventListener('click', function(e) {
+    if (e.target === el.discoverModal) closeDiscoverModal();
+  });
+}
+if (el.discoverSearch) {
+  el.discoverSearch.addEventListener('input', function() {
+    renderDiscoveryCards(_allDiscoveredDbs);
+  });
+}
+if (el.btnRescan) {
+  el.btnRescan.addEventListener('click', () => {
+    _allDiscoveredDbs = [];
+    el.discoveryList.innerHTML = '<div class="discovery-scanning"><div class="spinner" style="width:20px;height:20px;border-width:2px"></div><span>Scanning filesystem…</span></div>';
+    el.discoverCount.textContent = '';
+    runScanning();
+  });
+}
 
 // ─── View mode toggle (Table / Document) ──────────────────────────────────────
 function setViewMode(mode) {
@@ -290,22 +441,6 @@ el.recentList.addEventListener('click', function(e) {
   const li = e.target.closest('li[data-fp]');
   if (li) window.sqlBrowser.openDatabase(li.dataset.fp);
 });
-
-async function loadRecentFiles() {
-  const files = await window.sqlBrowser.getRecentFiles();
-  if (!files || !files.length) { el.recentSection.style.display = 'none'; return; }
-  el.recentSection.style.display = 'block';
-  el.recentList.innerHTML = '';
-  files.forEach(function(fp) {
-    const name = fp.split(/[/\\]/).pop();
-    const li = document.createElement('li');
-    li.dataset.fp = fp;
-    li.innerHTML =
-      '<span class="recent-file-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span>' +
-      '<div class="recent-file-info"><div class="recent-file-name">' + esc(name) + '</div><div class="recent-file-path">' + esc(fp) + '</div></div>';
-    el.recentList.appendChild(li);
-  });
-}
 
 // ─── DB Events ────────────────────────────────────────────────────────────────
 window.sqlBrowser.onDbOpened(function(data) {
@@ -336,6 +471,13 @@ window.sqlBrowser.onDbClosed(function() {
 
 window.sqlBrowser.onDbError(function(msg) { showToast('Error: ' + msg, 'error'); });
 window.sqlBrowser.onShowAbout(function()  { el.aboutModal.style.display = 'flex'; });
+
+window.sqlBrowser.onDbFileChanged(async function() {
+  showToast('Database written to by external app — reloading data', 'info');
+  if (State.currentTable) {
+    await loadTableData();
+  }
+});
 
 // ─── Table List ───────────────────────────────────────────────────────────────
 function renderTableList(tables) {
@@ -570,7 +712,21 @@ el.btnSchema.addEventListener('click', async function() {
   if (!State.currentTable) return;
   const schema = await window.sqlBrowser.getTableSchema(State.currentTable);
   if (schema.error) { showToast(schema.error, 'error'); return; }
-  el.schemaTitle.textContent = 'Schema: ' + State.currentTable;
+  el.schemaTitle.textContent = State.currentTable;
+
+  if (schema.columns && schema.columns.length > 0) {
+    el.schemaColChip.style.display = 'inline-flex';
+    el.schemaColCount.textContent = schema.columns.length;
+  } else {
+    el.schemaColChip.style.display = 'none';
+  }
+
+  if (schema.indexes && schema.indexes.length > 0) {
+    el.schemaIdxChip.style.display = 'inline-flex';
+    el.schemaIdxCount.textContent = schema.indexes.length;
+  } else {
+    el.schemaIdxChip.style.display = 'none';
+  }
 
   let html = '<div><div class="schema-section-title">Columns (' + schema.columns.length + ')</div>';
   html += '<table class="schema-table"><thead><tr><th>#</th><th>Name</th><th>Type</th><th>Nullable</th><th>Default</th><th>Key</th></tr></thead><tbody>';
@@ -589,9 +745,13 @@ el.btnSchema.addEventListener('click', async function() {
   }
   html+='<div><div class="schema-section-title">CREATE Statement</div><pre class="schema-sql">'+esc(schema.createSql||'')+'</pre></div>';
   el.schemaBody.innerHTML = html;
+  el.schemaBody.innerHTML = html;
   showView('schema');
 });
-el.btnCloseSchema.addEventListener('click', function() { if(State.currentTable) showView('data'); else showView('empty'); });
+
+function closeSchemaView() { if(State.currentTable) showView('data'); else showView('empty'); }
+if (el.btnCloseSchema) el.btnCloseSchema.addEventListener('click', closeSchemaView);
+if (el.btnCloseSchemaTop) el.btnCloseSchemaTop.addEventListener('click', closeSchemaView);
 
 // ─── Export CSV ───────────────────────────────────────────────────────────────
 function buildCsv(headers, rows) {
