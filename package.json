@@ -22,11 +22,11 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "src/assets/icon.ico"
+      "icon": "src/assets/icon.png"
     },
     "mac": {
       "target": "dmg",
-      "icon": "src/assets/icon.icns"
+      "icon": "src/assets/icon.png"
     },
     "nsis": {
       "oneClick": false,
