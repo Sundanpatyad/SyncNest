@@ -34,6 +34,7 @@
         <div class="logo-text">
           <h1>SyncNest</h1>
           <p>Local Database Explorer</p>
+          <p style="font-size: 11px; margin-top: 4px; color: var(--text-muted);">Created by Sundan Sharma</p>
         </div>
       </div>
 
@@ -94,7 +95,7 @@
             </svg>
           </div>
           <div>
-            <h3>React Native Databases</h3>
+            <h3>Local Databases</h3>
             <p class="modal-subtitle">Auto-discovered on this machine</p>
           </div>
         </div>
@@ -127,7 +128,7 @@
       <div class="modal-discover-body" id="discovery-list">
         <div class="discovery-scanning" id="discovery-scanning">
           <div class="spinner" style="width:20px;height:20px;border-width:2px"></div>
-          <span>Scanning for React Native databases…</span>
+          <span>Scanning for databases…</span>
         </div>
       </div>
       <div class="modal-discover-footer">
@@ -136,6 +137,21 @@
       </div>
     </div>
   </div>
+
+  <!-- Discovery Card Template for easy UI editing -->
+  <template id="discovery-card-template">
+    <div class="discovery-card">
+      <div class="dc-info">
+        <div class="dc-top">
+          <div class="dc-name"></div>
+          <div class="dc-source-badge"></div>
+        </div>
+        <div class="dc-path-wrapper">
+          <div class="dc-path"></div>
+        </div>
+      </div>
+    </div>
+  </template>
 
   <!-- ═══════════ MAIN APP ═══════════ -->
   <div id="app" class="app" style="display:none">
@@ -189,20 +205,26 @@
       </nav>
 
       <div class="sidebar-footer">
-        <button class="btn-ghost btn-sm" id="btn-query-editor">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="4 17 10 11 4 5" />
-            <line x1="12" y1="19" x2="20" y2="19" />
-          </svg>
-          SQL Editor
-        </button>
-        <button class="btn-ghost btn-sm" id="btn-close-db">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-          Close
-        </button>
+        <div style="display: flex; gap: 5px; width: 100%; justify-content: space-between;">
+          <button class="btn-ghost btn-sm" id="btn-query-editor" style="flex: 1;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4 17 10 11 4 5" />
+              <line x1="12" y1="19" x2="20" y2="19" />
+            </svg>
+            SQL Editor
+          </button>
+          <button class="btn-ghost btn-sm" id="btn-close-db" style="flex: 1;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+            Close
+          </button>
+        </div>
+        <div
+          style="width: 100%; text-align: center; margin-top: 2px; font-size: 10px; color: var(--text-muted); padding: 4px 0;">
+          Created by Sundan Sharma
+        </div>
       </div>
     </aside>
 
@@ -255,19 +277,19 @@
             <div class="view-toggle" id="view-toggle">
               <button class="view-toggle-btn active" id="btn-view-table" title="Table View">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <line x1="3" y1="9" x2="21" y2="9"/>
-                  <line x1="3" y1="15" x2="21" y2="15"/>
-                  <line x1="9" y1="3" x2="9" y2="21"/>
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="3" y1="9" x2="21" y2="9" />
+                  <line x1="3" y1="15" x2="21" y2="15" />
+                  <line x1="9" y1="3" x2="9" y2="21" />
                 </svg>
                 Table
               </button>
               <button class="view-toggle-btn" id="btn-view-doc" title="Document View">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
                 </svg>
                 Document
               </button>
@@ -276,7 +298,10 @@
             <div class="action-bar-divider"></div>
 
             <div class="action-search-wrap">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
               <input type="text" class="search-input" id="data-search" placeholder="Search rows…" />
             </div>
           </div>
@@ -284,16 +309,27 @@
           <!-- Right: Action buttons -->
           <div class="action-bar-right">
             <button class="action-btn" id="btn-refresh" title="Reload current table data">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
               Refresh
             </button>
             <button class="action-btn" id="btn-schema" title="View table schema">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="3" y1="9" x2="21" y2="9" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+              </svg>
               Schema
             </button>
             <div class="action-bar-divider"></div>
             <button class="action-btn action-btn-primary" id="btn-export" title="Export table to CSV">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
               Export CSV
             </button>
           </div>
@@ -303,7 +339,9 @@
         <div class="table-stats-bar">
           <span class="table-stats-text" id="table-stats"></span>
           <span class="table-stats-badge" id="table-stats-badge">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/></svg>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            </svg>
             Ready
           </span>
         </div>
@@ -332,10 +370,16 @@
         <div class="schema-header-bar">
           <div class="schema-header-left">
             <button class="schema-back-btn" id="btn-close-schema" title="Back to data view">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </button>
             <div class="schema-header-icon">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="3" y1="9" x2="21" y2="9" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+              </svg>
             </div>
             <div class="schema-header-info">
               <span class="schema-header-label">Schema</span>
@@ -344,15 +388,27 @@
           </div>
           <div class="schema-header-right">
             <span class="schema-stat-chip" id="schema-col-chip" style="display:none">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
               <span id="schema-col-count">0</span> columns
             </span>
             <span class="schema-stat-chip schema-stat-chip-idx" id="schema-idx-chip" style="display:none">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
               <span id="schema-idx-count">0</span> indexes
             </span>
             <button class="action-btn" id="btn-close-schema-top" title="Close schema">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
               Close
             </button>
           </div>
@@ -461,7 +517,7 @@
           </div>
         </div>
         <h2>SyncNest</h2>
-        <p class="about-version">Version 1.0.0</p>
+        <p class="about-version">Version 1.0.0 — Created by Sundan Sharma</p>
         <p class="about-desc">A beautiful cross-platform SQLite browser. Open any local .db or .sqlite file and explore
           your data with Table or Document views. Edit and delete records inline.</p>
         <div class="about-features">
