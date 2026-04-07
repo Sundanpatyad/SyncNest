@@ -2606,24 +2606,6 @@ kbd {
   border-top: 1px solid var(--border);
 }
 
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-mid);
-}
-
 .add-btn:hover {
   color: #10b981;
   border-color: rgba(16, 185, 129, 0.3);
