@@ -1071,10 +1071,71 @@ async function renderRelationsView() {
 
   if (loading) loading.style.display = 'none';
 
-  // Initial grid layout
-  const cols = Math.max(2, Math.ceil(Math.sqrt(tables.length)));
-  tables.forEach(function(t, i) {
-    _erPos[t.name] = { x: 60 + (i % cols) * (ER_CARD_W + 80), y: 60 + Math.floor(i / cols) * 320 };
+  // Tree-like layout using topological sort logic
+  const graph = {};
+  const inDegree = {};
+  
+  tables.forEach(function(t) {
+    graph[t.name] = [];
+    inDegree[t.name] = 0;
+  });
+
+  // Build edges: referenced table (PK) -> referencing table (FK) (Parent -> Child)
+  Object.keys(_erFKs).forEach(function(fromTable) {
+    (_erFKs[fromTable] || []).forEach(function(fk) {
+      var toTable = fk.toTable;
+      if (graph[toTable] && graph[fromTable]) {
+        if (toTable !== fromTable && !graph[toTable].includes(fromTable)) {
+           graph[toTable].push(fromTable);
+           inDegree[fromTable] = (inDegree[fromTable] || 0) + 1;
+        }
+      }
+    });
+  });
+
+  const levels = {};
+  let currentLevel = 0;
+  let queue = Object.keys(inDegree).filter(function(t) { return inDegree[t] === 0; });
+  const processed = new Set();
+  
+  while (queue.length > 0) {
+    const nextQueue = [];
+    queue.forEach(function(node) {
+      levels[node] = currentLevel;
+      processed.add(node);
+      graph[node].forEach(function(child) {
+        inDegree[child]--;
+        if (inDegree[child] === 0) {
+           nextQueue.push(child);
+        }
+      });
+    });
+    // Cycle escape hatch
+    if (currentLevel > tables.length) break;
+    queue = nextQueue;
+    currentLevel++;
+  }
+
+  // Put cycles or disconnected components at the end
+  tables.forEach(function(t) {
+    if (!processed.has(t.name)) {
+      levels[t.name] = currentLevel;
+    }
+  });
+
+  const currentY = {};
+  tables.forEach(function(t) {
+    const lvl = levels[t.name] || 0;
+    if (currentY[lvl] === undefined) {
+      currentY[lvl] = 40; // initial top margin
+    }
+    _erPos[t.name] = { 
+      x: 60 + lvl * (ER_CARD_W + 120), 
+      y: currentY[lvl]
+    };
+    const schemaLen = _erSchemas[t.name].columns ? _erSchemas[t.name].columns.length : 0;
+    const cardHeight = schemaLen * ER_COL_H + ER_HEADER_H;
+    currentY[lvl] += cardHeight + 40; // 40px vertical gap
   });
 
   // Render cards
@@ -1175,8 +1236,6 @@ function _erMakeDraggable(card, tableName, svg) {
 
 function _erDrawLines(svg) {
   svg.innerHTML = '<defs>' +
-    '<marker id="er-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">' +
-    '<path d="M0,0.5 L0,6.5 L7,3.5 z" fill="rgba(140,150,175,0.75)"/></marker>' +
     '<marker id="er-dot" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">' +
     '<circle cx="3" cy="3" r="2.2" fill="rgba(140,150,175,0.7)"/></marker>' +
     '</defs>';
@@ -1186,16 +1245,32 @@ function _erDrawLines(svg) {
       var toTable = fk.toTable;
       if (!_erPos[fromTable] || !_erPos[toTable]) return;
 
-      var x1 = _erPos[fromTable].x + ER_CARD_W;
-      var y1 = _erColY(fromTable, fk.from);
-      var x2 = _erPos[toTable].x;
-      var y2 = _erColY(toTable, fk.to);
-      var dx = Math.max(Math.abs(x2 - x1) * 0.45, 60);
+      var p1x = _erPos[toTable].x;
+      var p2x = _erPos[fromTable].x;
 
-      var d = 'M ' + x1 + ' ' + y1 +
-              ' C ' + (x1 + dx) + ' ' + y1 +
-              ', '  + (x2 - dx) + ' ' + y2 +
-              ', '  + x2 + ' ' + y2;
+      var startX, startY, endX, endY;
+      
+      // Draw from left-most table to right-most table dynamically
+      if (p1x <= p2x) {
+         // PK (toTable) is left of FK (fromTable)
+         startX = p1x + ER_CARD_W; // exit from right
+         startY = _erColY(toTable, fk.to);
+         endX   = p2x;             // enter from left
+         endY   = _erColY(fromTable, fk.from);
+      } else {
+         // FK (fromTable) is left of PK (toTable)
+         startX = p2x + ER_CARD_W; // exit from right
+         startY = _erColY(fromTable, fk.from);
+         endX   = p1x;             // enter from left
+         endY   = _erColY(toTable, fk.to);
+      }
+
+      var dx = Math.max(Math.abs(endX - startX) * 0.45, 60);
+
+      var d = 'M ' + startX + ' ' + startY +
+              ' C ' + (startX + dx) + ' ' + startY +
+              ', '  + (endX - dx) + ' ' + endY +
+              ', '  + endX + ' ' + endY;
 
       var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', d);
@@ -1203,7 +1278,7 @@ function _erDrawLines(svg) {
       path.setAttribute('stroke', 'rgba(140,150,175,0.5)');
       path.setAttribute('stroke-width', '1.5');
       path.setAttribute('marker-start', 'url(#er-dot)');
-      path.setAttribute('marker-end',   'url(#er-arrow)');
+      path.setAttribute('marker-end',   'url(#er-dot)');
       svg.appendChild(path);
     });
   });
