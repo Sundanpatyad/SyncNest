@@ -25,5 +25,6 @@ interface Window {
     onDbClosed: (callback: () => void) => void;
     onDbError: (callback: (error: string) => void) => void;
     runQuery: (sql: string) => Promise<any>;
+    exportCsv: (options: { data: string; filename: string }) => Promise<any>;
   };
 }
