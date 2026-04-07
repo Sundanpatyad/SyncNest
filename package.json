@@ -12,10 +12,6 @@
   "build": {
     "appId": "com.sqlbrowser.app",
     "productName": "SyncNest",
-    "repository": {
-      "type": "git",
-      "url": "git+https://github.com/Sundanpatyad/SyncNest.git"
-    },
     "publish": [
       {
         "provider": "github",
@@ -53,6 +49,10 @@
   ],
   "author": "SyncNest",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sundanpatyad/SyncNest.git"
+  },
   "devDependencies": {
     "@electron/rebuild": "^4.0.3",
     "electron": "^28.3.3",

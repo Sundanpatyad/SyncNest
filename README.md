@@ -1,82 +1,101 @@
-# SQL Browser — README
+# SyncNest — Premium SQL Browser
 
-A beautiful, cross-platform desktop SQLite database browser built with Electron.js.
+A beautiful, high-performance desktop SQLite database browser designed for modern workflows. Built by **Sundan Sharma**.
 
-## ✨ Features
+## ✨ Key Features
 
-- **Open any SQLite file** — `.db`, `.sqlite`, `.sqlite3`, `.db3`
-- **Table Explorer** — Sidebar listing all tables with row counts
-- **Visual Data Grid** — Paginated, sortable, searchable table viewer
-- **SQL Query Editor** — Full syntax-highlighted editor (CodeMirror)
-- **CSV Export** — Export any table or query result
-- **Recent Files** — Remembers recently opened databases
-- **Drag & Drop** — Drop a `.db` file directly onto the app
+- **📂 Local Database Discovery** — Automatically scans your system, iOS Simulators, and Android Emulators for SQLite files.
+- **📊 Adaptive Data Views** — Switch between a high-density **Table View** and a MongoDB Compass-inspired **Document View** for nested JSON data.
+- **🔍 Advanced SQL Editor** — Full syntax-highlighted editor with `Ctrl+Enter` execution support and multi-query history.
+- **🔄 Auto-Updates** — Built-in SaaS-level update system that notifies you and prepares the latest version in the background.
+- **🚀 CI/CD Release Pipeline** — Fully automated build and release system via GitHub Actions.
+- **📤 Pro Exports** — One-click CSV export for any table or custom query result.
+- **💎 Glassmorphism UI** — Stunning modern interface with interactive animations and a premium dark theme.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) v18 or higher
-- npm (included with Node.js)
+- [Node.js](https://nodejs.org/) v18, v20, or v22 (LTS recommended)
+- Git (for release management)
 
-### Install & Run
-
+### Installation & Run
 ```bash
+# Clone the repository
+git clone https://github.com/Sundanpatyad/SyncNest.git
+cd SyncNest
+
 # Install dependencies
 npm install
 
-# Start the app in development mode
+# Start development mode
 npm start
 ```
 
-### Build Installers
+## 📦 Automated Releases (SaaS Pipeline)
 
-```bash
-# Build for your current platform
-npm run build
+SyncNest uses a professional CI/CD pipeline. No manual builds are required on your local machine.
 
-# Build for Windows specifically
-npm run build:win
+### Triggering a New Release
+Official installers (`.exe` and `.dmg`) are built automatically when you push a version tag:
 
-# Build for macOS specifically
-npm run build:mac
-```
+1. **Commit your changes**:
+   ```bash
+   git add .
+   git commit -m "Update feature X"
+   git push origin module
+   ```
 
-Installers are saved to the `build/` directory.
+2. **Tag and Push**:
+   ```bash
+   git tag v1.0.3
+   git push origin v1.0.3
+   ```
+
+3. **Check the Build**: Head to your repository's **Actions** tab. GitHub will build the installers and automatically create a new **GitHub Release** with the downloads!
+
+### Latest Download Links
+- **Windows (.exe)**: `https://github.com/Sundanpatyad/SyncNest/releases/latest/download/SyncNest.Setup.exe`
+- **macOS (.dmg)**: `https://github.com/Sundanpatyad/SyncNest/releases/latest/download/SyncNest.dmg`
+
+## 🔄 Auto-Update System
+
+SyncNest is equipped with `electron-updater`. 
+
+- **Check**: Every time the app starts, it checks for a newer version in your GitHub Releases.
+- **Notify**: A toast alert informs you when an update is downloading.
+- **Apply**: Once the download is complete, a prompt confirms the update will be applied on the next launch.
 
 ## 🛠 Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Desktop Shell | Electron.js |
-| Database Engine | better-sqlite3 |
-| SQL Editor | CodeMirror 5 |
-| UI | Vanilla HTML/CSS/JS |
-| Packaging | electron-builder |
+| **Core** | Electron.js |
+| **Engine** | better-sqlite3 |
+| **Styling** | Vanilla CSS (Glassmorphism) |
+| **Automation** | GitHub Actions |
+| **Updates** | electron-updater |
+| **Packaging** | electron-builder |
 
 ## 📁 Project Structure
 
-```
-SQL_BRowser/
-├── electron/
-│   ├── main.js        — Electron main process
-│   └── preload.js     — Secure IPC bridge
-├── src/
-│   ├── index.html     — Main app UI
-│   ├── styles/
-│   │   └── main.css   — Premium dark theme
-│   └── js/
-│       └── app.js     — UI controller
-├── package.json
-└── README.md
+```text
+SyncNest/
+├── .github/workflows/ — GitHub Actions build pipeline
+├── electron/          — Main process & Preload bridge
+├── src/               — Frontend UI code
+│   ├── index.html     — Entry point with glassmorphism UI
+│   ├── js/            — UI Controller (app.js)
+│   └── styles/        — Modern CSS design tokens
+├── package.json       — Build & Publish configuration
+└── README.md          — Project documentation
 ```
 
 ## 💡 Usage Tips
 
-- **Run a selection**: Highlight SQL text and press `Ctrl+Enter` to run just that selection
-- **Search data**: Use the search bar in the toolbar to filter table rows across all columns
-- **Sort columns**: Click any column header to sort ascending/descending
-- **Export**: Use the Export CSV button to save the current table or query result
+- **Search data**: Use the toolbar search to filter rows instantly across all columns.
+- **Edit Inline**: Click any row in a table to open the editor modal.
+- **SQL Studio**: Use the SQL Editor for complex joins and schema migrations.
+- **RTL Support**: File paths in the local discovery view are handled with RTL protection to ensure clarity.
 
-
-<!-- ForIndatllLocally -->
-xattr -cr /Applications/SyncNest.app
+---
+Created with ❤️ by **Sundan Sharma**
