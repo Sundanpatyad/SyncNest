@@ -656,6 +656,20 @@ function renderDocumentView(rows, columns) {
     card.className = 'doc-card';
     card.style.animationDelay = Math.min(i * 0.03, 0.3) + 's';
 
+    // Add edit affordance for the document card
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:8px';
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn-ghost btn-sm';
+    editBtn.style.cssText = 'color: var(--text-muted); font-size: 11px; padding: 4px 8px;';
+    editBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;vertical-align:middle"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> <span style="vertical-align:middle">Edit Record</span>';
+    editBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openEditModal(row, i);
+    });
+    actions.appendChild(editBtn);
+    card.appendChild(actions);
+
     columns.forEach(function (c) {
       card.appendChild(buildFieldNode(c.name, row[c.name]));
     });
