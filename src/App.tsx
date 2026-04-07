@@ -1,0 +1,423 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import WelcomeScreen from './components/WelcomeScreen';
+import Sidebar from './components/Sidebar';
+import Toolbar from './components/Toolbar';
+import TableView from './components/TableView';
+import DocumentView from './components/DocumentView';
+import Pagination from './components/Pagination';
+import EditRowModal from './components/EditRowModal';
+import AboutModal from './components/AboutModal';
+import SchemaView from './components/SchemaView';
+import QueryView from './components/QueryView';
+import RelationsView from './components/RelationsView';
+import { Database } from 'lucide-react';
+import { esc } from './utils';
+
+// --- Types ---
+interface TableInfo {
+  name: string;
+  rowCount: number;
+}
+
+interface DBInfo {
+  tableCount: number;
+  sizeKb: string;
+}
+
+interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
+
+const App: React.FC = () => {
+  // --- Global State ---
+  const [isAppVisible, setIsAppVisible] = useState(false);
+  const [dbName, setDbName] = useState<string | null>(null);
+  const [dbPath, setDbPath] = useState<string | null>(null);
+  const [dbMeta, setDbMeta] = useState<DBInfo | null>(null);
+  const [tables, setTables] = useState<TableInfo[]>([]);
+  
+  // --- View State ---
+  const [currentTable, setCurrentTable] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'document'>('table');
+  const [activeView, setActiveView] = useState<'empty' | 'data' | 'schema' | 'query' | 'relations'>('empty');
+  
+  // --- Table Data State ---
+  const [rows, setRows] = useState<any[]>([]);
+  const [columns, setColumns] = useState<any[]>([]);
+  const [totalRows, setTotalRows] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [sortCol, setSortCol] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // --- Modals State ---
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [editingRow, setEditingRow] = useState<{ row: any; index: number } | null>(null);
+  const [pkColumn, setPkColumn] = useState<string | null>(null);
+  
+  // --- Toasts ---
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // --- Helpers ---
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Date.now() + Math.random();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 3000);
+  }, []);
+
+  const guessPkColumn = (cols: any[]) => {
+    const realPk = cols.find(c => c.pk === 1 || c.pk === true);
+    if (realPk) return realPk.name;
+    const lower = cols.map(c => c.name.toLowerCase());
+    if (lower.includes('id')) return cols[lower.indexOf('id')].name;
+    const idCol = lower.findIndex(n => n.endsWith('id') || n.startsWith('id'));
+    if (idCol !== -1) return cols[idCol].name;
+    return cols.length ? cols[0].name : null;
+  };
+
+  const loadTableData = useCallback(async (options: any = {}) => {
+    if (!currentTable) return;
+    setIsLoading(true);
+    
+    const params = {
+      table: currentTable,
+      page: options.page || currentPage,
+      pageSize: options.pageSize || pageSize,
+      sortCol: options.sortCol !== undefined ? options.sortCol : sortCol,
+      sortDir: options.sortDir !== undefined ? options.sortDir : sortDir,
+      search: options.search !== undefined ? options.search : searchQuery,
+    };
+
+    const result = await window.sqlBrowser.getTableData(params);
+    setIsLoading(false);
+
+    if (result.error) {
+      showToast(result.error, 'error');
+      return;
+    }
+
+    setColumns(result.columns);
+    setRows(result.rows);
+    setTotalRows(result.total);
+    setPkColumn(guessPkColumn(result.columns));
+  }, [currentTable, currentPage, pageSize, sortCol, sortDir, searchQuery, showToast]);
+
+  const selectTable = async (tableName: string) => {
+    setCurrentTable(tableName);
+    setCurrentPage(1);
+    setSortCol(null);
+    setSortDir('asc');
+    setSearchQuery('');
+    setActiveView('data');
+    // loadTableData will be triggered by useEffect
+  };
+
+  const refreshTables = async () => {
+    const result = await window.sqlBrowser.getTables();
+    if (result && result.tables) {
+      setTables(result.tables);
+    }
+  };
+
+  const closeDatabase = async () => {
+    await window.sqlBrowser.closeDatabase();
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === 'o') {
+        e.preventDefault();
+        window.sqlBrowser.openFileDialog();
+      }
+      if (e.key === 'F5') {
+        e.preventDefault();
+        if (currentTable) loadTableData();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentTable, loadTableData]);
+
+  useEffect(() => {
+    // DB Events
+    window.sqlBrowser.onDbOpened(async (data: any) => {
+      setDbName(data.name);
+      setDbPath(data.path);
+      setTables(data.tables);
+      setCurrentTable(null);
+      setActiveView('empty');
+      setIsAppVisible(true);
+      
+      const info = await window.sqlBrowser.getDbInfo();
+      if (!info.error) {
+        setDbMeta({
+          tableCount: info.tableCount,
+          sizeKb: (info.size / 1024).toFixed(1)
+        });
+      }
+      showToast(`Opened ${data.name}`, 'success');
+    });
+
+    window.sqlBrowser.onDbClosed(() => {
+      setDbName(null);
+      setDbPath(null);
+      setDbMeta(null);
+      setTables([]);
+      setCurrentTable(null);
+      setActiveView('empty');
+      setIsAppVisible(false);
+      showToast('Database closed', 'info');
+    });
+
+    window.sqlBrowser.onDbError((msg: string) => showToast(`Error: ${msg}`, 'error'));
+    window.sqlBrowser.onShowAbout(() => setIsAboutOpen(true));
+    window.sqlBrowser.onDbFileChanged(() => {
+      showToast('External change detected - reloading', 'info');
+      if (currentTable) loadTableData();
+    });
+
+    return () => {
+      window.sqlBrowser.removeAllListeners('onDbOpened');
+      window.sqlBrowser.removeAllListeners('onDbClosed');
+      window.sqlBrowser.removeAllListeners('onDbError');
+      window.sqlBrowser.removeAllListeners('onShowAbout');
+      window.sqlBrowser.removeAllListeners('onDbFileChanged');
+    };
+  }, [currentTable, loadTableData, showToast]);
+
+  useEffect(() => {
+    if (currentTable) {
+      loadTableData();
+    }
+  }, [currentTable, currentPage, pageSize, sortCol, sortDir, searchQuery, loadTableData]);
+
+  // --- Handlers ---
+  const handleSort = (col: string) => {
+    if (sortCol === col) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortCol(col);
+      setSortDir('asc');
+    }
+    setCurrentPage(1);
+  };
+
+  const handleUpdateRow = async (updates: any) => {
+    if (!editingRow || !pkColumn) return;
+    const result = await window.sqlBrowser.updateRow({
+      table: currentTable,
+      pkColumn: pkColumn,
+      pkValue: editingRow.row[pkColumn],
+      updates
+    });
+
+    if (result.error) {
+      showToast(`Update failed: ${result.error}`, 'error');
+    } else {
+      showToast('Row updated successfully', 'success');
+      setEditingRow(null);
+      loadTableData();
+    }
+  };
+
+  const handleDeleteRow = async () => {
+    if (!editingRow || !pkColumn) return;
+    const result = await window.sqlBrowser.deleteRow({
+      table: currentTable,
+      pkColumn: pkColumn,
+      pkValue: editingRow.row[pkColumn]
+    });
+
+    if (result.error) {
+      showToast(`Delete failed: ${result.error}`, 'error');
+    } else {
+      showToast('Row deleted', 'info');
+      setEditingRow(null);
+      loadTableData();
+    }
+  };
+
+  const handleExport = async () => {
+    if (!currentTable) return;
+    const all = await window.sqlBrowser.getTableData({
+      table: currentTable,
+      page: 1,
+      pageSize: 999999,
+      sortCol,
+      sortDir,
+      search: searchQuery
+    });
+    
+    if (all.error) {
+      showToast(all.error, 'error');
+      return;
+    }
+
+    const csvHeaders = all.columns.map((c: any) => c.name);
+    const escCsv = (v: any) => {
+      if (v === null || v === undefined) return '';
+      const s = String(v);
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    };
+
+    const csvLines = [
+      csvHeaders.map(escCsv).join(','),
+      ...all.rows.map((r: any) => csvHeaders.map((h: string) => escCsv(r[h])).join(','))
+    ];
+    
+    const result = await window.sqlBrowser.exportCsv({
+      data: csvLines.join('\r\n'),
+      filename: `${currentTable}.csv`
+    });
+
+    if (result.success) showToast('Exported to CSV!', 'success');
+    else if (!result.canceled) showToast(result.error, 'error');
+  };
+
+  if (!isAppVisible) {
+    return <WelcomeScreen onOpenDatabase={(path) => window.sqlBrowser.openDatabase(path)} />;
+  }
+
+  return (
+    <div className="app">
+      <Sidebar 
+        dbName={dbName}
+        dbMeta={dbMeta}
+        tables={tables}
+        currentTable={currentTable}
+        onSelectTable={selectTable}
+        onRefreshTables={refreshTables}
+        onOpenQueryEditor={() => setActiveView('query')}
+        onOpenRelations={() => setActiveView('relations')}
+        onCloseDatabase={closeDatabase}
+      />
+
+      <main className="main-content">
+        <Toolbar 
+          dbName={dbName}
+          tableName={currentTable}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onRefresh={() => loadTableData()}
+          onShowSchema={() => setActiveView('schema')}
+          onExport={handleExport}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+
+        {activeView === 'empty' && (
+          <div className="empty-state">
+            <div className="empty-icon">
+              <Database size={60} strokeWidth={0.8} style={{ color: 'var(--text-muted)' }} />
+            </div>
+            <h2>No table selected</h2>
+            <p>Choose a table from the sidebar to explore your data, or open the SQL editor to run a custom query.</p>
+            <button className="btn-primary" onClick={() => setActiveView('query')}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}>
+                <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
+              </svg>
+              Open SQL Editor
+            </button>
+          </div>
+        )}
+
+        {activeView === 'data' && (
+          <div className="data-view">
+            <div className="table-stats-bar">
+              <span className="table-stats-text">
+                Showing {((currentPage - 1) * pageSize + 1).toLocaleString()}–{Math.min(currentPage * pageSize, totalRows).toLocaleString()} of {totalRows.toLocaleString()} rows
+                {searchQuery && ` · "${searchQuery}"`}
+              </span>
+              <span className="table-stats-badge">
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '4px' }}>
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                </svg>
+                {isLoading ? 'Loading...' : 'Ready'}
+              </span>
+            </div>
+
+            {viewMode === 'table' ? (
+              <TableView 
+                columns={columns}
+                rows={rows}
+                total={totalRows}
+                page={currentPage}
+                pageSize={pageSize}
+                sortCol={sortCol}
+                sortDir={sortDir}
+                onSort={handleSort}
+                onEditRow={(row, index) => setEditingRow({ row, index })}
+                isLoading={isLoading}
+              />
+            ) : (
+              <DocumentView 
+                rows={rows}
+                columns={columns}
+                page={currentPage}
+                pageSize={pageSize}
+                onEditRow={(row, index) => setEditingRow({ row, index })}
+              />
+            )}
+
+            <Pagination 
+              total={totalRows}
+              page={currentPage}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
+            />
+          </div>
+        )}
+
+        {activeView === 'schema' && currentTable && (
+          <SchemaView tableName={currentTable} onClose={() => setActiveView('data')} />
+        )}
+
+        {activeView === 'query' && (
+          <QueryView onClose={() => setActiveView(currentTable ? 'data' : 'empty')} onRefreshTables={refreshTables} />
+        )}
+
+        {activeView === 'relations' && (
+          <RelationsView dbName={dbName} onClose={() => setActiveView(currentTable ? 'data' : 'empty')} />
+        )}
+      </main>
+
+      {/* --- Modals --- */}
+      <EditRowModal 
+        isOpen={!!editingRow}
+        onClose={() => setEditingRow(null)}
+        row={editingRow?.row}
+        columns={columns}
+        pkColumn={pkColumn}
+        onUpdate={handleUpdateRow}
+        onDelete={handleDeleteRow}
+      />
+
+      <AboutModal 
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
+      />
+
+      {/* --- Toasts --- */}
+      <div className="toast-container">
+        {toasts.map(t => (
+          <div key={t.id} className={`toast ${t.type}`}>
+            <span>{t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : 'ℹ'}</span>
+            <span>{t.message}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default App;

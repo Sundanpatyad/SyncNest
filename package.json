@@ -2,12 +2,12 @@
   "name": "syncnest",
   "version": "1.0.0",
   "description": "SyncNest — A premium cross-platform desktop SQL database browser for local SQLite files",
-  "main": "electron/main.js",
+  "main": "dist-electron/main.js",
   "scripts": {
-    "start": "electron .",
-    "build": "electron-builder",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac"
+    "dev": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "build:win": "tsc && vite build && electron-builder --win",
+    "build:mac": "tsc && vite build && electron-builder --mac"
   },
   "build": {
     "appId": "com.sqlbrowser.app",
@@ -23,8 +23,8 @@
       "output": "build"
     },
     "files": [
-      "electron/**/*",
-      "src/**/*",
+      "dist-electron/**/*",
+      "dist/**/*",
       "node_modules/**/*"
     ],
     "win": {
@@ -55,12 +55,23 @@
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "electron": "^28.3.3",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.7",
+    "vite-plugin-electron": "^0.29.1"
   },
   "dependencies": {
     "better-sqlite3": "^9.4.3",
     "electron-updater": "^6.8.3",
+    "lucide-react": "^1.7.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "sql.js": "^1.14.1"
   }
 }

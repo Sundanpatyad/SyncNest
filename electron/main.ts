@@ -1,8 +1,9 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
-const { autoUpdater } = require('electron-updater');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from 'electron';
+import { autoUpdater } from 'electron-updater';
+import path from 'path';
+import fs from 'fs';
+import os from 'os';
+import Database from 'better-sqlite3';
 
 // ─── Firewall & Network Noise Suppression ─────────────────────────────────────
 // Disable common Chromium features that trigger Windows Firewall prompts
@@ -11,10 +12,9 @@ app.commandLine.appendSwitch('disable-device-discovery-notifications');
 app.commandLine.appendSwitch('no-proxy-server');
 app.commandLine.appendSwitch('remote-debugging-port', '0');
 
-let mainWindow;
-let db = null;
-const Database = require('better-sqlite3');
-let currentDbPath = null;
+let mainWindow: BrowserWindow | null = null;
+let db: any = null;
+let currentDbPath: string | null = null;
 const recentFilesPath = path.join(app.getPath('userData'), 'recent-files.json');
 
 // ─── Pre-load sql.js engine once at startup ───────────────────────────────────
@@ -35,7 +35,11 @@ function createWindow() {
     show: false,
   });
 
-  mainWindow.loadFile(path.join(__dirname, '../src/index.html'));
+  if (process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+  } else {
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+  }
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
