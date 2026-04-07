@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, Trash2, Save, AlertTriangle } from 'lucide-react';
-import { esc } from '../utils';
 
 interface EditRowModalProps {
   isOpen: boolean;

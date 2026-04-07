@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Share2, RefreshCw, X, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Share2, RefreshCw, X } from 'lucide-react';
 
 const ER_COLORS = [
   { bg: 'rgba(99,102,241,0.22)',  border: 'rgba(99,102,241,0.55)',  text: '#a5b4fc' },
@@ -29,16 +29,14 @@ interface TableSchema {
 }
 
 interface RelationsViewProps {
-  dbName: string | null;
   onClose: () => void;
 }
 
-const RelationsView: React.FC<RelationsViewProps> = ({ dbName, onClose }) => {
+const RelationsView: React.FC<RelationsViewProps> = ({ onClose }) => {
   const [schemas, setSchemas] = useState<TableSchema[]>([]);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [isLoading, setIsLoading] = useState(true);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
   const draggingTable = useRef<string | null>(null);
   const offset = useRef({ x: 0, y: 0 });
 

@@ -11,7 +11,6 @@ import SchemaView from './components/SchemaView';
 import QueryView from './components/QueryView';
 import RelationsView from './components/RelationsView';
 import { Database } from 'lucide-react';
-import { esc } from './utils';
 
 // --- Types ---
 interface TableInfo {

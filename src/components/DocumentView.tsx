@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Edit, ChevronRight, ChevronDown } from 'lucide-react';
-import { esc, guessType, tryParseJson } from '../utils';
+import { guessType, tryParseJson } from '../utils';
 
 interface DocumentViewProps {
   rows: any[];

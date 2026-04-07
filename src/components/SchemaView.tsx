@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, Columns, Activity, X } from 'lucide-react';
-import { esc } from '../utils';
 
 interface SchemaViewProps {
   tableName: string;
