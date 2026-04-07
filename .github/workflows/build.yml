@@ -3,7 +3,7 @@ name: Build Releases
 on:
   push:
     branches:
-      - main
+      - module
   workflow_dispatch:
 
 jobs:

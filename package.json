@@ -43,6 +43,7 @@
   "author": "SyncNest",
   "license": "MIT",
   "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
     "electron": "^28.3.3",
     "electron-builder": "^24.13.3"
   },

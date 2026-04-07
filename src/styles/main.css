@@ -99,30 +99,66 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  background: var(--bg-deep);
+  background: radial-gradient(circle at 50% 100%, #1a1a1a 0%, #0a0a0a 100%);
   z-index: 100;
   overflow-y: auto;
-  padding: 40px 16px 60px;
+  padding: 60px 16px 80px;
+}
+
+.welcome-bg-glow {
+  position: absolute;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 800px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(79, 193, 255, 0.08) 0%, transparent 70%);
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: -1;
+  animation: glow-pulse 10s infinite alternate;
+}
+
+@keyframes glow-pulse {
+  0% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1.2); }
 }
 
 .welcome-wrap {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  animation: slide-up-fade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .welcome-card {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 28px 24px 22px;
-  background: var(--bg-base);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-2xl);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  gap: 22px;
+  padding: 32px;
+  background: rgba(26, 26, 26, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.2),
+    0 24px 48px -12px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.welcome-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .welcome-logo {
@@ -132,30 +168,50 @@ body {
 }
 
 .logo-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: linear-gradient(145deg, #282828, #1c1c1c);
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #333 0%, #111 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border-mid);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+  transform: translateX(-100%);
+  transition: transform 0.6s;
+}
+
+.welcome-card:hover .logo-icon::after {
+  transform: translateX(100%);
 }
 
 .logo-text h1 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.5px;
+  color: #fff;
+  letter-spacing: -0.8px;
   line-height: 1.1;
+  background: linear-gradient(to bottom, #fff, #aaa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .logo-text p {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
-  margin-top: 3px;
+  margin-top: 4px;
+  font-weight: 500;
 }
 
 .welcome-divider {
@@ -210,15 +266,21 @@ body {
 }
 
 .drop-zone svg {
-  opacity: 0.35;
+  opacity: 0.5;
+  color: var(--blue);
   flex-shrink: 0;
 }
 
 .welcome-byline {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--text-muted);
   text-align: center;
-  margin-top: 2px;
+  margin-top: 4px;
+}
+
+.welcome-byline strong {
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 /* ══════════════════════════════════════════════════════
@@ -226,12 +288,15 @@ body {
    ══════════════════════════════════════════════════════ */
 .welcome-dbs {
   width: 100%;
-  background: var(--bg-base);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-2xl);
+  background: rgba(22, 22, 22, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .wdb-header {
