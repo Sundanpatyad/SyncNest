@@ -76,3 +76,7 @@ SQL_BRowser/
 - **Search data**: Use the search bar in the toolbar to filter table rows across all columns
 - **Sort columns**: Click any column header to sort ascending/descending
 - **Export**: Use the Export CSV button to save the current table or query result
+
+
+<!-- ForIndatllLocally -->
+xattr -cr /Applications/SyncNest.app
