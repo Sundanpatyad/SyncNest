@@ -491,6 +491,14 @@ window.sqlBrowser.onDbFileChanged(async function () {
   }
 });
 
+window.sqlBrowser.onUpdateAvailable(function() {
+  showToast('A new update is available and downloading...', 'info');
+});
+
+window.sqlBrowser.onUpdateDownloaded(function() {
+  showToast('Update downloaded! It will be installed on next launch.', 'success', 8000);
+});
+
 // ─── Table List ───────────────────────────────────────────────────────────────
 function renderTableList(tables) {
   el.tableList.innerHTML = '';

@@ -12,6 +12,17 @@
   "build": {
     "appId": "com.sqlbrowser.app",
     "productName": "SyncNest",
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/Sundanpatyad/SyncNest.git"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Sundanpatyad",
+        "repo": "SyncNest"
+      }
+    ],
     "directories": {
       "output": "build"
     },
@@ -49,6 +60,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^9.4.3",
+    "electron-updater": "^6.8.3",
     "sql.js": "^1.14.1"
   }
 }

@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -38,8 +39,8 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    // Open DevTools for debugging — comment out after fixing
-    // mainWindow.webContents.openDevTools();
+    // Check for updates
+    autoUpdater.checkForUpdatesAndNotify();
   });
 
   buildMenu();
@@ -564,6 +565,19 @@ ipcMain.handle('get-db-info', () => {
 });
 
 ipcMain.handle('scan-databases', () => scanForDatabases());
+
+// ─── Auto-Updater Events ──────────────────────────────────────────────────────
+autoUpdater.on('update-available', () => {
+  if (mainWindow) mainWindow.webContents.send('update-available');
+});
+
+autoUpdater.on('update-downloaded', () => {
+  if (mainWindow) mainWindow.webContents.send('update-downloaded');
+});
+
+autoUpdater.on('error', (err) => {
+  console.error('[SyncNest] Update error:', err);
+});
 
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 app.whenReady().then(createWindow);

@@ -2,8 +2,8 @@ name: Build Releases
 
 on:
   push:
-    branches:
-      - module
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -21,20 +21,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 18
 
       - name: Install Dependencies
         run: npm install
 
-      - name: Build Windows
-        if: matrix.os == 'windows-latest'
-        run: npm run build:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Mac
-        if: matrix.os == 'macos-latest'
-        run: npm run build:mac
+      - name: Build and Publish
+        run: npm run build -- --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -45,3 +38,5 @@ jobs:
           path: |
             build/*.exe
             build/*.dmg
+            build/*.blockmap
+            build/latest*.yml

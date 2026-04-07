@@ -34,6 +34,8 @@ contextBridge.exposeInMainWorld('sqlBrowser', {
   onDbError: (cb) => ipcRenderer.on('db-error', (_, msg) => cb(msg)),
   onShowAbout: (cb) => ipcRenderer.on('show-about', () => cb()),
   onDbFileChanged: (cb) => ipcRenderer.on('db-file-changed', () => cb()),
+  onUpdateAvailable: (cb) => ipcRenderer.on('update-available', () => cb()),
+  onUpdateDownloaded: (cb) => ipcRenderer.on('update-downloaded', () => cb()),
 
   // Remove listeners
   removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
