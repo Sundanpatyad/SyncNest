@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, X, Download, Terminal } from 'lucide-react';
+import { Play, X, Download, Terminal, Bot } from 'lucide-react';
+import { AISidebar } from './AISidebar';
 
 interface QueryViewProps {
   onClose: () => void;
@@ -19,6 +20,7 @@ const QueryView: React.FC<QueryViewProps> = ({ onClose, onRefreshTables }) => {
   const [results, setResults] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAISidebar, setShowAISidebar] = useState(false);
   const editorRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -55,6 +57,15 @@ const QueryView: React.FC<QueryViewProps> = ({ onClose, onRefreshTables }) => {
       }
     };
   }, []);
+
+  const handleAddQueryFromAI = (aiQuery: string) => {
+    if (editorRef.current) {
+      const currentQuery = editorRef.current.getValue();
+      const newQuery = currentQuery ? currentQuery + '\n\n' + aiQuery : aiQuery;
+      editorRef.current.setValue(newQuery);
+      setQuery(newQuery);
+    }
+  };
 
   const handleRunQuery = async () => {
     const sql = editorRef.current ? editorRef.current.getSelection() || editorRef.current.getValue() : query;
@@ -115,6 +126,13 @@ const QueryView: React.FC<QueryViewProps> = ({ onClose, onRefreshTables }) => {
             SQL Editor
           </span>
           <div className="query-toolbar-right">
+            <button 
+              className="btn-ai-sidebar btn-sm" 
+              onClick={() => setShowAISidebar(!showAISidebar)}
+            >
+              <Bot size={14} />
+              AI Assistant
+            </button>
             <span className="query-hint">Ctrl+Enter to run</span>
             <button className="btn-primary btn-sm" onClick={handleRunQuery} disabled={isLoading}>
               <Play size={12} fill="currentColor" style={{ marginRight: '5px' }} />
@@ -125,6 +143,13 @@ const QueryView: React.FC<QueryViewProps> = ({ onClose, onRefreshTables }) => {
         </div>
         <div ref={containerRef} id="codemirror-container"></div>
       </div>
+
+      {/* AI Sidebar */}
+      {showAISidebar && (
+        <div className="ai-sidebar-container">
+          <AISidebar onAddQuery={handleAddQueryFromAI} />
+        </div>
+      )}
 
       <div className="query-results-panel">
         <div className="results-toolbar">
