@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Share2, RefreshCw, X } from 'lucide-react';
 
 const ER_COLORS = [
@@ -29,10 +29,11 @@ interface TableSchema {
 }
 
 interface RelationsViewProps {
+  dbName: string | null;
   onClose: () => void;
 }
 
-const RelationsView: React.FC<RelationsViewProps> = ({ onClose }) => {
+const RelationsView: React.FC<RelationsViewProps> = ({ dbName, onClose }) => {
   const [schemas, setSchemas] = useState<TableSchema[]>([]);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [isLoading, setIsLoading] = useState(true);

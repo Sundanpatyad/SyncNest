@@ -24,7 +24,13 @@ interface Window {
     onDbOpened: (callback: (data: any) => void) => void;
     onDbClosed: (callback: () => void) => void;
     onDbError: (callback: (error: string) => void) => void;
+    onShowAbout: (callback: () => void) => void;
+    onDbFileChanged: (callback: (filePath: string) => void) => void;
+    removeAllListeners: (event: string) => void;
     runQuery: (sql: string) => Promise<any>;
     exportCsv: (options: { data: string; filename: string }) => Promise<any>;
+    openFileDialog: () => Promise<any>;
+    scanDatabases: () => Promise<any>;
+    getDbInfo: () => Promise<any>;
   };
 }
