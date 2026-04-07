@@ -275,10 +275,13 @@ function showView(view) {
   el.schemaView.style.display = 'none';
   el.queryView.style.display = 'none';
   el.toolbarActions.style.display = 'none';
+  var rv = document.getElementById('relations-view');
+  if (rv) rv.style.display = 'none';
   if (view === 'empty') { el.emptyState.style.display = 'flex'; }
   if (view === 'data') { el.dataView.style.display = 'flex'; el.toolbarActions.style.display = 'flex'; }
   if (view === 'schema') { el.schemaView.style.display = 'flex'; el.toolbarActions.style.display = 'flex'; }
   if (view === 'query') { el.queryView.style.display = 'flex'; initEditor(); }
+  if (view === 'relations' && rv) { rv.style.display = 'flex'; }
 }
 function showApp() { el.welcomeScreen.style.display = 'none'; el.app.style.display = 'flex'; showView('empty'); }
 
@@ -998,6 +1001,235 @@ el.btnDeleteRow.addEventListener('click', async function () {
 // ─── About ────────────────────────────────────────────────────────────────────
 el.btnCloseAbout.addEventListener('click', function () { el.aboutModal.style.display = 'none'; });
 el.aboutModal.addEventListener('click', function (e) { if (e.target === el.aboutModal) el.aboutModal.style.display = 'none'; });
+
+// ─── ER Diagram / Relations View ─────────────────────────────────────────────
+const ER_COLORS = [
+  { bg: 'rgba(99,102,241,0.22)',  border: 'rgba(99,102,241,0.55)',  text: '#a5b4fc' },
+  { bg: 'rgba(20,184,166,0.18)',  border: 'rgba(20,184,166,0.5)',   text: '#5eead4' },
+  { bg: 'rgba(245,158,11,0.18)', border: 'rgba(245,158,11,0.5)',   text: '#fcd34d' },
+  { bg: 'rgba(239,68,68,0.18)',  border: 'rgba(239,68,68,0.5)',    text: '#fca5a5' },
+  { bg: 'rgba(139,92,246,0.22)', border: 'rgba(139,92,246,0.55)',  text: '#c4b5fd' },
+  { bg: 'rgba(14,165,233,0.18)', border: 'rgba(14,165,233,0.5)',   text: '#7dd3fc' },
+  { bg: 'rgba(236,72,153,0.18)', border: 'rgba(236,72,153,0.5)',   text: '#f9a8d4' },
+  { bg: 'rgba(132,204,22,0.15)', border: 'rgba(132,204,22,0.4)',   text: '#bef264' },
+];
+
+const ER_CARD_W = 224;
+const ER_HEADER_H = 37;
+const ER_COL_H = 27;
+
+let _erPos = {};
+let _erFKs = {};
+let _erSchemas = {};
+
+async function openRelationsView() {
+  showView('relations');
+  await renderRelationsView();
+}
+
+async function renderRelationsView() {
+  const canvas  = document.getElementById('relations-canvas');
+  const svg     = document.getElementById('relations-svg');
+  const loading = document.getElementById('relations-loading');
+  if (!canvas || !svg) return;
+
+  canvas.innerHTML = '';
+  _erPos = {}; _erFKs = {}; _erSchemas = {};
+
+  if (!State.dbName) {
+    canvas.innerHTML = '<div class="er-empty">Open a database first.</div>';
+    return;
+  }
+
+  if (loading) loading.style.display = 'flex';
+
+  const tablesResult = await window.sqlBrowser.getTables();
+  const tables = (tablesResult && tablesResult.tables) ? tablesResult.tables : [];
+
+  if (!tables.length) {
+    if (loading) loading.style.display = 'none';
+    canvas.innerHTML = '<div class="er-empty">No tables found.</div>';
+    return;
+  }
+
+  // Fetch schema + FK list for each table
+  for (const t of tables) {
+    try {
+      const s = await window.sqlBrowser.getTableSchema(t.name);
+      _erSchemas[t.name] = s || { columns: [] };
+    } catch(e) { _erSchemas[t.name] = { columns: [] }; }
+    try {
+      const safe = t.name.replace(/"/g, '""');
+      const r = await window.sqlBrowser.runQuery('PRAGMA foreign_key_list("' + safe + '")');
+      if (r && !r.error && r.rows && r.rows.length) {
+        _erFKs[t.name] = r.rows.map(function(row) {
+          return { from: row.from, toTable: row.table, to: row.to || row.from };
+        });
+      }
+    } catch(e) {}
+  }
+
+  if (loading) loading.style.display = 'none';
+
+  // Initial grid layout
+  const cols = Math.max(2, Math.ceil(Math.sqrt(tables.length)));
+  tables.forEach(function(t, i) {
+    _erPos[t.name] = { x: 60 + (i % cols) * (ER_CARD_W + 80), y: 60 + Math.floor(i / cols) * 320 };
+  });
+
+  // Render cards
+  tables.forEach(function(t, i) { _erRenderCard(t.name, i, canvas, svg); });
+
+  // Draw lines after DOM settles
+  setTimeout(function() { _erDrawLines(svg); }, 60);
+}
+
+function _erColY(tableName, colName) {
+  var schema = _erSchemas[tableName];
+  var cols = (schema && schema.columns) ? schema.columns : [];
+  var idx = cols.findIndex(function(c) { return c.name === colName; });
+  return _erPos[tableName].y + ER_HEADER_H + (idx >= 0 ? idx : 0) * ER_COL_H + ER_COL_H / 2;
+}
+
+function _erRenderCard(tableName, colorIdx, canvas, svg) {
+  var schema = _erSchemas[tableName] || { columns: [] };
+  var pos    = _erPos[tableName];
+  var color  = ER_COLORS[colorIdx % ER_COLORS.length];
+  var fkCols = new Set((_erFKs[tableName] || []).map(function(f){ return f.from; }));
+
+  var card = document.createElement('div');
+  card.className = 'er-card';
+  card.id = 'er-card-' + tableName;
+  card.style.left = pos.x + 'px';
+  card.style.top  = pos.y + 'px';
+
+  var hdr = document.createElement('div');
+  hdr.className = 'er-card-header';
+  hdr.style.cssText = 'background:' + color.bg + ';border-bottom:1px solid ' + color.border + ';color:' + color.text;
+  hdr.textContent = tableName;
+  card.appendChild(hdr);
+
+  (schema.columns || []).forEach(function(col) {
+    var isPk = col.pk === 1 || col.pk === true;
+    var isFk = fkCols.has(col.name);
+    var row  = document.createElement('div');
+    row.className = 'er-col-row' + (isPk ? ' er-row-pk' : '') + (isFk ? ' er-row-fk' : '');
+    row.dataset.col = col.name;
+
+    var icon = document.createElement('span');
+    icon.className = 'er-col-icon' + (isPk ? ' er-pk' : '') + (isFk ? ' er-fk' : '');
+    icon.textContent = isPk ? '#' : (isFk ? '⇢' : 'T');
+
+    var name = document.createElement('span');
+    name.className = 'er-col-name';
+    name.textContent = col.name;
+    name.title = col.name + (col.type ? ' (' + col.type + ')' : '');
+
+    row.appendChild(icon);
+    row.appendChild(name);
+
+    if (isFk) {
+      var dot = document.createElement('span');
+      dot.className = 'er-conn-dot er-conn-dot-right';
+      row.appendChild(dot);
+    }
+    if (isPk) {
+      var dot2 = document.createElement('span');
+      dot2.className = 'er-conn-dot er-conn-dot-left';
+      row.appendChild(dot2);
+    }
+    card.appendChild(row);
+  });
+
+  canvas.appendChild(card);
+  _erMakeDraggable(card, tableName, svg);
+}
+
+function _erMakeDraggable(card, tableName, svg) {
+  card.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    var wrap = document.getElementById('relations-canvas-wrap');
+    var rect = wrap.getBoundingClientRect();
+    var offX = (e.clientX - rect.left + wrap.scrollLeft) - _erPos[tableName].x;
+    var offY = (e.clientY - rect.top  + wrap.scrollTop)  - _erPos[tableName].y;
+    card.classList.add('dragging');
+
+    function onMove(ev) {
+      var nx = Math.max(0, ev.clientX - rect.left + wrap.scrollLeft - offX);
+      var ny = Math.max(0, ev.clientY - rect.top  + wrap.scrollTop  - offY);
+      _erPos[tableName] = { x: nx, y: ny };
+      card.style.left = nx + 'px';
+      card.style.top  = ny + 'px';
+      _erDrawLines(svg);
+    }
+    function onUp() {
+      card.classList.remove('dragging');
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+}
+
+function _erDrawLines(svg) {
+  svg.innerHTML = '<defs>' +
+    '<marker id="er-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">' +
+    '<path d="M0,0.5 L0,6.5 L7,3.5 z" fill="rgba(140,150,175,0.75)"/></marker>' +
+    '<marker id="er-dot" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">' +
+    '<circle cx="3" cy="3" r="2.2" fill="rgba(140,150,175,0.7)"/></marker>' +
+    '</defs>';
+
+  Object.keys(_erFKs).forEach(function(fromTable) {
+    (_erFKs[fromTable] || []).forEach(function(fk) {
+      var toTable = fk.toTable;
+      if (!_erPos[fromTable] || !_erPos[toTable]) return;
+
+      var x1 = _erPos[fromTable].x + ER_CARD_W;
+      var y1 = _erColY(fromTable, fk.from);
+      var x2 = _erPos[toTable].x;
+      var y2 = _erColY(toTable, fk.to);
+      var dx = Math.max(Math.abs(x2 - x1) * 0.45, 60);
+
+      var d = 'M ' + x1 + ' ' + y1 +
+              ' C ' + (x1 + dx) + ' ' + y1 +
+              ', '  + (x2 - dx) + ' ' + y2 +
+              ', '  + x2 + ' ' + y2;
+
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', 'rgba(140,150,175,0.5)');
+      path.setAttribute('stroke-width', '1.5');
+      path.setAttribute('marker-start', 'url(#er-dot)');
+      path.setAttribute('marker-end',   'url(#er-arrow)');
+      svg.appendChild(path);
+    });
+  });
+}
+
+// Wire up Relations buttons
+var _btnRelations = document.getElementById('btn-relations');
+if (_btnRelations) {
+  _btnRelations.addEventListener('click', function() {
+    if (!State.dbName) { showToast('Open a database first', 'info'); return; }
+    openRelationsView();
+  });
+}
+var _btnCloseRelations = document.getElementById('btn-close-relations');
+if (_btnCloseRelations) {
+  _btnCloseRelations.addEventListener('click', function() {
+    if (State.currentTable) showView('data'); else showView('empty');
+  });
+}
+var _btnResetEr = document.getElementById('btn-reset-er-layout');
+if (_btnResetEr) {
+  _btnResetEr.addEventListener('click', function() {
+    _erPos = {};
+    renderRelationsView();
+  });
+}
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 showWelcome();

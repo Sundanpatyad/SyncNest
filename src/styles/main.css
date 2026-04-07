@@ -2367,3 +2367,241 @@ body {
 .discovery-card:hover .dc-name {
   color: white;
 }
+
+/* ══════════════════════════════════════════════════════
+   ER DIAGRAM / RELATIONS VIEW
+   ══════════════════════════════════════════════════════ */
+.relations-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.relations-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-deep);
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.relations-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.relations-header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #a5b4fc;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.relations-header-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.relations-header-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.relations-header-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.relations-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.relations-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 700px) {
+  .relations-hint { display: none; }
+}
+
+.relations-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px;
+  color: var(--text-muted);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+/* Scrollable canvas wrapper — dotted grid background */
+.relations-canvas-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+  background-color: var(--bg-deep);
+  background-image: radial-gradient(circle, var(--border-mid) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Positioning canvas for cards (large virtual space) */
+.relations-canvas {
+  position: relative;
+  width: 3200px;
+  height: 2400px;
+}
+
+/* SVG overlay for relationship lines */
+.relations-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3200px;
+  height: 2400px;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 0;
+}
+
+/* ── ER Table Cards ─────────────────────────────────── */
+.er-card {
+  position: absolute;
+  width: 224px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+  user-select: none;
+  z-index: 1;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.er-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  border-color: var(--border-mid);
+}
+
+.er-card.dragging {
+  cursor: grabbing;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+  z-index: 100;
+}
+
+.er-card-header {
+  padding: 9px 13px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: grab;
+}
+
+.er-col-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  font-size: 11.5px;
+  position: relative;
+  transition: background 0.1s;
+}
+
+.er-col-row:last-child {
+  border-bottom: none;
+}
+
+.er-col-row:hover {
+  background: var(--bg-hover);
+}
+
+.er-col-icon {
+  font-size: 10px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.er-col-icon.er-pk { color: #fbbf24; }
+.er-col-icon.er-fk { color: #60a5fa; }
+
+.er-col-name {
+  flex: 1;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.er-col-row.er-row-pk .er-col-name {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.er-col-row.er-row-fk .er-col-name {
+  color: #93c5fd;
+}
+
+/* Connection dots shown on hover */
+.er-conn-dot {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--border-bright);
+  border: 2px solid var(--bg-card);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.er-conn-dot-right { right: -5px; }
+.er-conn-dot-left  { left: -5px; }
+
+.er-col-row:hover .er-conn-dot,
+.er-col-row.er-row-pk .er-conn-dot,
+.er-col-row.er-row-fk .er-conn-dot {
+  opacity: 1;
+}
+
+/* Empty state inside canvas */
+.er-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
