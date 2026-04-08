@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Share2, RefreshCw, X } from 'lucide-react';
 
 const ER_COLORS = [
