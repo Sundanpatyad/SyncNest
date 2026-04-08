@@ -33,7 +33,7 @@ const App: React.FC = () => {
   // --- Global State ---
   const [isAppVisible, setIsAppVisible] = useState(false);
   const [dbName, setDbName] = useState<string | null>(null);
-  const [dbPath, setDbPath] = useState<string | null>(null);
+  const [_dbPath, setDbPath] = useState<string | null>(null);
   const [dbMeta, setDbMeta] = useState<DBInfo | null>(null);
   const [tables, setTables] = useState<TableInfo[]>([]);
   
@@ -386,7 +386,7 @@ const App: React.FC = () => {
         )}
 
         {activeView === 'relations' && (
-          <RelationsView dbName={dbName} onClose={() => setActiveView(currentTable ? 'data' : 'empty')} />
+          <RelationsView onClose={() => setActiveView(currentTable ? 'data' : 'empty')} />
         )}
       </main>
 

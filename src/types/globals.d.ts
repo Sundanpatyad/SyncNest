@@ -12,19 +12,45 @@ declare module '*.module.css' {
 
 interface Window {
   sqlBrowser: {
-    openDatabase: (filePath: string) => Promise<any>;
+    // File operations
+    openFileDialog: () => Promise<void>;
+    openDatabase: (filePath: string) => Promise<{ success: boolean; error?: string }>;
     closeDatabase: () => Promise<void>;
-    getTables: () => Promise<any>;
+    getRecentFiles: () => Promise<string[] | {path: string, name: string}[]>;
+
+    // Auto-discovery
+    scanDatabases: () => Promise<{ databases: any[] }>;
+
+    // Table operations
+    getTables: () => Promise<{ tables?: any[]; error?: string }>;
     getTableSchema: (tableName: string) => Promise<any>;
-    getTableData: (tableName: string, page: number, pageSize: number, sortBy?: string, sortOrder?: 'ASC' | 'DESC', filter?: string) => Promise<any>;
-    updateRow: (tableName: string, pkColumn: string, pkValue: any, updates: any) => Promise<any>;
-    deleteRow: (tableName: string, pkColumn: string, pkValue: any) => Promise<any>;
+    getTableData: (opts: any) => Promise<any>;
+
+    // Edit / Delete rows
+    updateRow: (opts: any) => Promise<{ success: boolean; changes?: number; error?: string }>;
+    deleteRow: (opts: any) => Promise<{ success: boolean; changes?: number; error?: string }>;
     addRow: (tableName: string, data: any) => Promise<any>;
     getRelations: () => Promise<any>;
+
+    // Query
+    runQuery: (sql: string) => Promise<any>;
+
+    // Export
+    exportCsv: (opts: any) => Promise<any>;
+
+    // DB info
+    getDbInfo: () => Promise<any>;
+
+    // Event listeners
     onDbOpened: (callback: (data: any) => void) => void;
     onDbClosed: (callback: () => void) => void;
     onDbError: (callback: (error: string) => void) => void;
-    runQuery: (sql: string) => Promise<any>;
-    exportCsv: (options: { data: string; filename: string }) => Promise<any>;
+    onShowAbout: (callback: () => void) => void;
+    onDbFileChanged: (callback: () => void) => void;
+    onUpdateAvailable: (callback: () => void) => void;
+    onUpdateDownloaded: (callback: () => void) => void;
+
+    // Remove listeners
+    removeAllListeners: (channel: string) => void;
   };
 }
