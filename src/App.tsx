@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { X } from 'lucide-react';
 import WelcomeScreen from './components/WelcomeScreen';
 import Sidebar from './components/Sidebar';
 import Toolbar from './components/Toolbar';
@@ -39,6 +40,7 @@ const App: React.FC = () => {
   
   // --- View State ---
   const [currentTable, setCurrentTable] = useState<string | null>(null);
+  const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'table' | 'document'>('table');
   const [activeView, setActiveView] = useState<'empty' | 'data' | 'schema' | 'query' | 'relations'>('empty');
   
@@ -109,12 +111,34 @@ const App: React.FC = () => {
 
   const selectTable = async (tableName: string) => {
     setCurrentTable(tableName);
+    setOpenTabs(prev => {
+      if (prev.includes(tableName)) return prev;
+      return [...prev, tableName];
+    });
     setCurrentPage(1);
     setSortCol(null);
     setSortDir('asc');
     setSearchQuery('');
     setActiveView('data');
-    // loadTableData will be triggered by useEffect
+  };
+
+  const switchTab = (tableName: string) => {
+    setCurrentTable(tableName);
+    setActiveView('data');
+  };
+
+  const closeTab = (e: React.MouseEvent, tableName: string) => {
+    e.stopPropagation();
+    setOpenTabs(prev => {
+      const newTabs = prev.filter(t => t !== tableName);
+      if (currentTable === tableName && newTabs.length > 0) {
+        setCurrentTable(newTabs[newTabs.length - 1]);
+      } else if (newTabs.length === 0) {
+        setCurrentTable(null);
+        setActiveView('empty');
+      }
+      return newTabs;
+    });
   };
 
   const refreshTables = async () => {
@@ -312,6 +336,28 @@ const App: React.FC = () => {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
+
+        {/* --- Tabs --- */}
+        {openTabs.length > 0 && (
+          <div className="table-tabs">
+            {openTabs.map(tab => (
+              <div
+                key={tab}
+                className={`table-tab ${currentTable === tab ? 'active' : ''}`}
+                onClick={() => switchTab(tab)}
+              >
+                <span className="tab-name">{tab}</span>
+                <button
+                  className="tab-close"
+                  onClick={(e) => closeTab(e, tab)}
+                  title="Close tab"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {activeView === 'empty' && (
           <div className="empty-state">

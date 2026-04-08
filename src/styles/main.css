@@ -1449,6 +1449,81 @@ body {
   white-space: nowrap;
 }
 
+/* ── Table Tabs ───────────────────────────────────────────── */
+.table-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 4px 12px 0;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.table-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.table-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 80px;
+  max-width: 160px;
+  white-space: nowrap;
+  position: relative;
+  top: 1px;
+}
+
+.table-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.table-tab.active {
+  background: var(--bg-active);
+  color: var(--text-primary);
+  border-color: var(--border-mid);
+  border-bottom: 1px solid var(--bg-active);
+}
+
+.tab-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.tab-close:hover {
+  background: var(--bg-surface);
+  color: var(--orange);
+}
+
 /* ── View Toggle ─────────────────────────────────────────── */
 .view-toggle {
   display: flex;
