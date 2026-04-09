@@ -237,7 +237,7 @@ const RelationsView: React.FC<RelationsViewProps> = ({ dbName, onClose }) => {
             <Share2 size={14} />
           </div>
           <div className="relations-header-info">
-            <span className="relations-header-label">Diagram</span>
+            <span className="relations-header-label">{dbName || 'Database'}</span>
             <span className="relations-header-title">Entity Relationships</span>
           </div>
         </div>
