@@ -14051,66 +14051,12 @@ function createWindow() {
 	});
 	if (process.env.VITE_DEV_SERVER_URL) mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
 	else mainWindow.loadFile(path.default.join(__dirname, "../dist/index.html"));
+	electron.Menu.setApplicationMenu(null);
+	mainWindow.setMenuBarVisibility(false);
 	mainWindow.once("ready-to-show", () => {
 		mainWindow.show();
 		import_main.autoUpdater.checkForUpdatesAndNotify();
 	});
-	buildMenu();
-}
-function buildMenu() {
-	electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate([
-		{
-			label: "File",
-			submenu: [
-				{
-					label: "Open Database...",
-					accelerator: "CmdOrCtrl+O",
-					click: () => openFileDialog()
-				},
-				{ type: "separator" },
-				{
-					label: "Close Database",
-					click: () => closeDatabase()
-				},
-				{ type: "separator" },
-				{ role: "quit" }
-			]
-		},
-		{
-			label: "Edit",
-			submenu: [
-				{ role: "undo" },
-				{ role: "redo" },
-				{ type: "separator" },
-				{ role: "cut" },
-				{ role: "copy" },
-				{ role: "paste" },
-				{ role: "delete" },
-				{ type: "separator" },
-				{ role: "selectAll" }
-			]
-		},
-		{
-			label: "View",
-			submenu: [
-				{ role: "reload" },
-				{ role: "toggleDevTools" },
-				{ type: "separator" },
-				{ role: "resetZoom" },
-				{ role: "zoomIn" },
-				{ role: "zoomOut" },
-				{ type: "separator" },
-				{ role: "togglefullscreen" }
-			]
-		},
-		{
-			label: "Help",
-			submenu: [{
-				label: "About SyncNest",
-				click: () => mainWindow.webContents.send("show-about")
-			}]
-		}
-	]));
 }
 function getRecentFiles() {
 	try {

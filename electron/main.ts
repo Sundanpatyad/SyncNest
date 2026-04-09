@@ -41,13 +41,15 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
+  // Hide default menu bar for clean, professional UI
+  Menu.setApplicationMenu(null);
+  mainWindow.setMenuBarVisibility(false);
+
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     // Check for updates
     autoUpdater.checkForUpdatesAndNotify();
   });
-
-  buildMenu();
 }
 
 // ─── Menu ─────────────────────────────────────────────────────────────────────
