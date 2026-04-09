@@ -149,6 +149,7 @@ const App: React.FC = () => {
       setTables(data.tables);
       setCurrentTable(null);
       setActiveView('empty');
+      setIsAppVisible(true);
       
       const info = await window.sqlBrowser.getDbInfo();
       if (!info.error) {
