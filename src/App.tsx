@@ -205,9 +205,9 @@ const App: React.FC = () => {
   };
 
   const handleUpdateRow = async (updates: any) => {
-    if (!editingRow || !pkColumn) return;
+    if (!editingRow || !pkColumn || !currentTable) return;
     const result = await window.sqlBrowser.updateRow({
-      table: currentTable,
+      table: currentTable!,
       pkColumn: pkColumn,
       pkValue: editingRow.row[pkColumn],
       updates
@@ -223,9 +223,9 @@ const App: React.FC = () => {
   };
 
   const handleDeleteRow = async () => {
-    if (!editingRow || !pkColumn) return;
+    if (!editingRow || !pkColumn || !currentTable) return;
     const result = await window.sqlBrowser.deleteRow({
-      table: currentTable,
+      table: currentTable!,
       pkColumn: pkColumn,
       pkValue: editingRow.row[pkColumn]
     });
@@ -242,7 +242,7 @@ const App: React.FC = () => {
   const handleExport = async () => {
     if (!currentTable) return;
     const all = await window.sqlBrowser.getTableData({
-      table: currentTable,
+      table: currentTable!,
       page: 1,
       pageSize: 999999,
       sortCol,
