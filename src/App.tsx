@@ -10,6 +10,7 @@ import AboutModal from './components/AboutModal';
 import SchemaView from './components/SchemaView';
 import QueryView from './components/QueryView';
 import RelationsView from './components/RelationsView';
+import TabStrip from './components/TabStrip';
 import { Database } from 'lucide-react';
 
 // --- Types ---
@@ -29,12 +30,23 @@ interface Toast {
   type: 'success' | 'error' | 'info';
 }
 
+interface Tab {
+  id: string;
+  title: string;
+  type: 'table' | 'query' | 'relations' | 'schema' | 'empty';
+  tableName?: string;
+}
+
 const App: React.FC = () => {
   // --- Global State ---
   const [isAppVisible, setIsAppVisible] = useState(false);
   const [dbName, setDbName] = useState<string | null>(null);
   const [dbMeta, setDbMeta] = useState<DBInfo | null>(null);
   const [tables, setTables] = useState<TableInfo[]>([]);
+  
+  // --- Tab State ---
+  const [tabs, setTabs] = useState<Tab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
   
   // --- View State ---
   const [currentTable, setCurrentTable] = useState<string | null>(null);
@@ -84,11 +96,11 @@ const App: React.FC = () => {
     setIsLoading(true);
     
     const params = {
-      table: currentTable,
+      table: currentTable!,
       page: options.page || currentPage,
       pageSize: options.pageSize || pageSize,
-      sortCol: options.sortCol !== undefined ? options.sortCol : sortCol,
-      sortDir: options.sortDir !== undefined ? options.sortDir : sortDir,
+      sortCol: (options.sortCol !== undefined ? options.sortCol : sortCol) ?? undefined,
+      sortDir: (options.sortDir !== undefined ? options.sortDir : sortDir) ?? undefined,
       search: options.search !== undefined ? options.search : searchQuery,
     };
 
@@ -107,13 +119,79 @@ const App: React.FC = () => {
   }, [currentTable, currentPage, pageSize, sortCol, sortDir, searchQuery, showToast]);
 
   const selectTable = async (tableName: string) => {
+    const tabId = `table-${tableName}`;
+    const existingTab = tabs.find(t => t.id === tabId);
+    
+    if (!existingTab) {
+      const newTab: Tab = {
+        id: tabId,
+        title: tableName,
+        type: 'table',
+        tableName: tableName
+      };
+      setTabs([...tabs, newTab]);
+    }
+    
+    setActiveTabId(tabId);
     setCurrentTable(tableName);
     setCurrentPage(1);
     setSortCol(null);
     setSortDir('asc');
     setSearchQuery('');
     setActiveView('data');
-    // loadTableData will be triggered by useEffect
+  };
+
+  const closeTab = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const newTabs = tabs.filter(t => t.id !== id);
+    setTabs(newTabs);
+    
+    if (activeTabId === id) {
+      if (newTabs.length > 0) {
+        const lastTab = newTabs[newTabs.length - 1];
+        switchTab(lastTab.id);
+      } else {
+        setActiveTabId(null);
+        setCurrentTable(null);
+        setActiveView('empty');
+      }
+    }
+  };
+
+  const switchTab = (id: string, overrideType?: 'table' | 'query' | 'relations', overrideTableName?: string) => {
+    const tab = tabs.find(t => t.id === id);
+    const type = overrideType || tab?.type;
+    const tableName = overrideTableName || tab?.tableName;
+
+    if (!type && !overrideType) return;
+    
+    setActiveTabId(id);
+    if (type === 'table') {
+      setCurrentTable(tableName || null);
+      setActiveView('data');
+    } else if (type === 'query') {
+      setCurrentTable(null);
+      setActiveView('query');
+    } else if (type === 'relations') {
+      setCurrentTable(null);
+      setActiveView('relations');
+    }
+  };
+
+  const openQueryTab = () => {
+    const id = 'query-editor';
+    if (!tabs.find(t => t.id === id)) {
+      setTabs([...tabs, { id, title: 'SQL Editor', type: 'query' }]);
+    }
+    switchTab(id, 'query');
+  };
+
+  const openRelationsTab = () => {
+    const id = 'relations-view';
+    if (!tabs.find(t => t.id === id)) {
+      setTabs([...tabs, { id, title: 'Relations', type: 'relations' }]);
+    }
+    switchTab(id, 'relations');
   };
 
   const refreshTables = async () => {
@@ -147,6 +225,8 @@ const App: React.FC = () => {
     window.sqlBrowser.onDbOpened(async (data: any) => {
       setDbName(data.name);
       setTables(data.tables);
+      setTabs([]);
+      setActiveTabId(null);
       setCurrentTable(null);
       setActiveView('empty');
       setIsAppVisible(true);
@@ -165,6 +245,8 @@ const App: React.FC = () => {
       setDbName(null);
       setDbMeta(null);
       setTables([]);
+      setTabs([]);
+      setActiveTabId(null);
       setCurrentTable(null);
       setActiveView('empty');
       setIsAppVisible(false);
@@ -205,11 +287,11 @@ const App: React.FC = () => {
   };
 
   const handleUpdateRow = async (updates: any) => {
-    if (!editingRow || !pkColumn) return;
+    if (!editingRow || !pkColumn || !currentTable) return;
     const result = await window.sqlBrowser.updateRow({
-      table: currentTable,
-      pkColumn: pkColumn,
-      pkValue: editingRow.row[pkColumn],
+      table: currentTable!,
+      pkColumn: pkColumn!,
+      pkValue: editingRow.row[pkColumn!],
       updates
     });
 
@@ -223,11 +305,11 @@ const App: React.FC = () => {
   };
 
   const handleDeleteRow = async () => {
-    if (!editingRow || !pkColumn) return;
+    if (!editingRow || !pkColumn || !currentTable) return;
     const result = await window.sqlBrowser.deleteRow({
-      table: currentTable,
-      pkColumn: pkColumn,
-      pkValue: editingRow.row[pkColumn]
+      table: currentTable!,
+      pkColumn: pkColumn!,
+      pkValue: editingRow.row[pkColumn!]
     });
 
     if (result.error) {
@@ -242,11 +324,11 @@ const App: React.FC = () => {
   const handleExport = async () => {
     if (!currentTable) return;
     const all = await window.sqlBrowser.getTableData({
-      table: currentTable,
+      table: currentTable!,
       page: 1,
       pageSize: 999999,
-      sortCol,
-      sortDir,
+      sortCol: sortCol ?? undefined,
+      sortDir: sortDir ?? undefined,
       search: searchQuery
     });
     
@@ -292,12 +374,18 @@ const App: React.FC = () => {
         currentTable={currentTable}
         onSelectTable={selectTable}
         onRefreshTables={refreshTables}
-        onOpenQueryEditor={() => setActiveView('query')}
-        onOpenRelations={() => setActiveView('relations')}
+        onOpenQueryEditor={openQueryTab}
+        onOpenRelations={openRelationsTab}
         onCloseDatabase={closeDatabase}
       />
 
       <main className="main-content">
+        <TabStrip 
+          tabs={tabs} 
+          activeTabId={activeTabId} 
+          onSwitchTab={switchTab} 
+          onCloseTab={closeTab} 
+        />
         <Toolbar 
           dbName={dbName}
           tableName={currentTable}

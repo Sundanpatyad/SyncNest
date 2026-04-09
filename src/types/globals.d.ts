@@ -16,9 +16,9 @@ interface Window {
     closeDatabase: () => Promise<void>;
     getTables: () => Promise<any>;
     getTableSchema: (tableName: string) => Promise<any>;
-    getTableData: (tableName: string, page: number, pageSize: number, sortBy?: string, sortOrder?: 'ASC' | 'DESC', filter?: string) => Promise<any>;
-    updateRow: (tableName: string, pkColumn: string, pkValue: any, updates: any) => Promise<any>;
-    deleteRow: (tableName: string, pkColumn: string, pkValue: any) => Promise<any>;
+    getTableData: (options: { table: string; page: number; pageSize: number; sortCol?: string | null; sortDir?: 'asc' | 'desc' | null; search?: string }) => Promise<any>;
+    updateRow: (options: { table: string; pkColumn: string; pkValue: any; updates: any }) => Promise<any>;
+    deleteRow: (options: { table: string; pkColumn: string; pkValue: any }) => Promise<any>;
     addRow: (tableName: string, data: any) => Promise<any>;
     getRelations: () => Promise<any>;
     onDbOpened: (callback: (data: any) => void) => void;

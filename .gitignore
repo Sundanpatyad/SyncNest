@@ -28,8 +28,20 @@ data.json
 
 # Tooling
 .vscode/
+dist-electron/
 
 # Ignore specific root test output
 out.txt
 test-sql.js
 test-script.js
+
+# Large build artifacts
+*.exe
+*.dll
+*.asar
+*.7z
+*.zip
+*.tar.gz
+winCodeSign*
+macCodeSign*
+linuxCodeSign*
