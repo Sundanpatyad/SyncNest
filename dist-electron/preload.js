@@ -1,1 +1,26 @@
-let e=require(`electron`);e.contextBridge.exposeInMainWorld(`sqlBrowser`,{openFileDialog:()=>e.ipcRenderer.invoke(`open-file-dialog`),openDatabase:t=>e.ipcRenderer.invoke(`open-database`,t),closeDatabase:()=>e.ipcRenderer.invoke(`close-database`),getRecentFiles:()=>e.ipcRenderer.invoke(`get-recent-files`),scanDatabases:()=>e.ipcRenderer.invoke(`scan-databases`),getTables:()=>e.ipcRenderer.invoke(`get-tables`),getTableData:t=>e.ipcRenderer.invoke(`get-table-data`,t),getTableSchema:t=>e.ipcRenderer.invoke(`get-table-schema`,t),updateRow:t=>e.ipcRenderer.invoke(`update-row`,t),deleteRow:t=>e.ipcRenderer.invoke(`delete-row`,t),runQuery:t=>e.ipcRenderer.invoke(`run-query`,t),exportCsv:t=>e.ipcRenderer.invoke(`export-csv`,t),getDbInfo:()=>e.ipcRenderer.invoke(`get-db-info`),onDbOpened:t=>e.ipcRenderer.on(`db-opened`,(e,n)=>t(n)),onDbClosed:t=>e.ipcRenderer.on(`db-closed`,()=>t()),onDbError:t=>e.ipcRenderer.on(`db-error`,(e,n)=>t(n)),onShowAbout:t=>e.ipcRenderer.on(`show-about`,()=>t()),onDbFileChanged:t=>e.ipcRenderer.on(`db-file-changed`,()=>t()),onUpdateAvailable:t=>e.ipcRenderer.on(`update-available`,()=>t()),onUpdateDownloaded:t=>e.ipcRenderer.on(`update-downloaded`,()=>t()),removeAllListeners:t=>e.ipcRenderer.removeAllListeners(t)});
+let electron = require("electron");
+//#region electron/preload.ts
+electron.contextBridge.exposeInMainWorld("sqlBrowser", {
+	openFileDialog: () => electron.ipcRenderer.invoke("open-file-dialog"),
+	openDatabase: (path) => electron.ipcRenderer.invoke("open-database", path),
+	closeDatabase: () => electron.ipcRenderer.invoke("close-database"),
+	getRecentFiles: () => electron.ipcRenderer.invoke("get-recent-files"),
+	scanDatabases: () => electron.ipcRenderer.invoke("scan-databases"),
+	getTables: () => electron.ipcRenderer.invoke("get-tables"),
+	getTableData: (opts) => electron.ipcRenderer.invoke("get-table-data", opts),
+	getTableSchema: (table) => electron.ipcRenderer.invoke("get-table-schema", table),
+	updateRow: (opts) => electron.ipcRenderer.invoke("update-row", opts),
+	deleteRow: (opts) => electron.ipcRenderer.invoke("delete-row", opts),
+	runQuery: (sql) => electron.ipcRenderer.invoke("run-query", sql),
+	exportCsv: (opts) => electron.ipcRenderer.invoke("export-csv", opts),
+	getDbInfo: () => electron.ipcRenderer.invoke("get-db-info"),
+	onDbOpened: (cb) => electron.ipcRenderer.on("db-opened", (_, data) => cb(data)),
+	onDbClosed: (cb) => electron.ipcRenderer.on("db-closed", () => cb()),
+	onDbError: (cb) => electron.ipcRenderer.on("db-error", (_, msg) => cb(msg)),
+	onShowAbout: (cb) => electron.ipcRenderer.on("show-about", () => cb()),
+	onDbFileChanged: (cb) => electron.ipcRenderer.on("db-file-changed", () => cb()),
+	onUpdateAvailable: (cb) => electron.ipcRenderer.on("update-available", () => cb()),
+	onUpdateDownloaded: (cb) => electron.ipcRenderer.on("update-downloaded", () => cb()),
+	removeAllListeners: (channel) => electron.ipcRenderer.removeAllListeners(channel)
+});
+//#endregion
