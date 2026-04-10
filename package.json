@@ -8,26 +8,47 @@
     "build": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder",
     "build:win": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder --win",
     "build:mac": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder --mac",
-    "build:linux": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder --linux"
+    "build:linux": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && npm prune --production && electron-builder --linux"
   },
   "build": {
     "appId": "com.sqlbrowser.app",
     "productName": "SyncNest",
     "publish": null,
     "directories": {
-      "output": "dist-electron"
+      "output": "dist-electron",
+      "buildResources": "build"
     },
     "files": [
-      "dist-electron/**/*",
       "dist/**/*",
-      "public/**/*",
-      "package.json"
+      "node_modules/better-sqlite3/**/*",
+      "!node_modules/**/*.md",
+      "!node_modules/**/*.map",
+      "!node_modules/**/LICENSE",
+      "!node_modules/**/license",
+      "!node_modules/**/LICENSE.txt",
+      "!node_modules/**/README",
+      "!node_modules/**/readme.md",
+      "!node_modules/**/CHANGELOG",
+      "!node_modules/**/test",
+      "!node_modules/**/tests",
+      "!node_modules/**/docs",
+      "!node_modules/**/examples",
+      "!node_modules/**/.github",
+      "!node_modules/**/.gitignore",
+      "!node_modules/**/*.d.ts",
+      "!node_modules/**/package-lock.json",
+      "!node_modules/**/yarn.lock"
     ],
     "asar": true,
     "asarUnpack": [
       "node_modules/better-sqlite3/**/*"
     ],
     "compression": "maximum",
+    "removePackageScripts": true,
+    "removePackageKeywords": true,
+    "extraMetadata": {
+      "main": "dist-electron/main.js"
+    },
     "win": {
       "target": "nsis",
       "icon": "src/assets/icon.png"
