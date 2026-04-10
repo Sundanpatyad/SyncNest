@@ -83,35 +83,6 @@ jobs:
       with:
         path: artifacts
 
-    - name: Rename artifacts to version-agnostic names
-      run: |
-        # Windows - rename to SyncNest-Setup.exe
-        for file in artifacts/windows-latest-build/dist-electron/*.exe; do
-          if [ -f "$file" ]; then
-            mv "$file" "artifacts/windows-latest-build/dist-electron/SyncNest-Setup.exe"
-            break
-          fi
-        done
-
-        # macOS ARM64 (Apple Silicon) - rename to SyncNest-arm64.dmg
-        for file in artifacts/macos-latest-build/dist-electron/*arm64*.dmg; do
-          if [ -f "$file" ]; then
-            mv "$file" "artifacts/macos-latest-build/dist-electron/SyncNest-arm64.dmg"
-            break
-          fi
-        done
-
-        # macOS x64 (Intel) - rename to SyncNest-x64.dmg
-        for file in artifacts/macos-latest-build/dist-electron/*.dmg; do
-          if [ -f "$file" ] && [[ ! "$file" == *"arm64"* ]]; then
-            mv "$file" "artifacts/macos-latest-build/dist-electron/SyncNest-x64.dmg"
-            break
-          fi
-        done
-
-        # Linux AppImage - keep original naming pattern for now
-        # Linux deb - keep original naming pattern for now
-
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:

@@ -13,14 +13,7 @@
   "build": {
     "appId": "com.sqlbrowser.app",
     "productName": "SyncNest",
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "Sundanpatyad",
-        "repo": "SyncNest"
-      }
-    ],
-    "directories": {
+        "directories": {
       "output": "dist-electron"
     },
     "files": [
