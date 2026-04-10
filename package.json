@@ -5,10 +5,11 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder",
-    "build:win": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder --win",
-    "build:mac": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder --mac",
-    "build:linux": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && npm prune --production && electron-builder --linux"
+    "build": "tsc && vite build && electron-builder",
+    "build:win": "tsc && vite build && electron-builder --win",
+    "build:mac": "tsc && vite build && electron-builder --mac",
+    "build:linux": "tsc && vite build && electron-builder --linux",
+    "postinstall": "electron-builder install-app-deps"
   },
   "build": {
     "appId": "com.sqlbrowser.app",
@@ -44,6 +45,7 @@
     "asarUnpack": [
       "node_modules/better-sqlite3/**/*"
     ],
+    "npmRebuild": false,
     "compression": "maximum",
     "removePackageScripts": true,
     "removePackageKeywords": true,
