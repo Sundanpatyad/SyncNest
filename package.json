@@ -13,6 +13,7 @@
   "build": {
     "appId": "com.sqlbrowser.app",
     "productName": "SyncNest",
+    "publish": null,
     "directories": {
       "output": "dist-electron"
     },
@@ -69,7 +70,10 @@
     "electron",
     "sql"
   ],
-  "author": "SyncNest",
+  "author": {
+    "name": "Sundan Sharma",
+    "email": "sundan@example.com"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
