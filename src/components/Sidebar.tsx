@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, RefreshCw, FolderOpen, Terminal, Share2, X } from 'lucide-react';
+import icon from '/icon.png';
 
 interface TableInfo {
   name: string;
@@ -47,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="sidebar-header">
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">
-            <img src="/icon.png" alt="SyncNest" className="sidebar-logo-img" />
+            <img src={icon} alt="SyncNest" className="sidebar-logo-img" />
           </div>
           <span className="sidebar-logo-text">SyncNest</span>
         </div>

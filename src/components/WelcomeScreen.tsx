@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { FolderOpen, Database, RefreshCw, Search, FileCode, ChevronRight, Globe } from 'lucide-react';
+import image1 from '/image1.jpg';
+import image2 from '/image2.jpg';
+import image3 from '/image3.jpg';
+import icon from '/icon.png';
+import author from '/author.jpg';
 
 interface DiscoveredDb {
   path: string;
@@ -16,9 +21,9 @@ interface WelcomeScreenProps {
 }
 
 const images = [
-  { src: '/image1.jpg', title: 'Powerful Database Management', subtitle: 'Manage SQLite databases with ease' },
-  { src: '/image2.jpg', title: 'Fast & Efficient', subtitle: 'Lightning-fast queries and data operations' },
-  { src: '/image3.jpg', title: 'Beautiful Interface', subtitle: 'Clean, modern design for better productivity' }
+  { src: image1, title: 'Powerful Database Management', subtitle: 'Manage SQLite databases with ease' },
+  { src: image2, title: 'Fast & Efficient', subtitle: 'Lightning-fast queries and data operations' },
+  { src: image3, title: 'Beautiful Interface', subtitle: 'Clean, modern design for better productivity' }
 ];
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenDatabase }) => {
@@ -77,7 +82,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenDatabase }) => {
       {/* Left Side - Image Carousel */}
       <div className="welcome-left">
         <div className="welcome-left-logo">
-          <img src="/icon.png" alt="SyncNest" className="logo-icon" />
+          <img src={icon} alt="SyncNest" className="logo-icon" />
           <span>SyncNest</span>
         </div>
         <button
@@ -205,7 +210,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenDatabase }) => {
         </div>
 
         <div className="welcome-byline">
-          <img src="/author.jpg" alt="Sundan Sharma" className="author-avatar" />
+          <img src={author} alt="Sundan Sharma" className="author-avatar" />
           <span>Created by <strong>Sundan Sharma</strong></span>
         </div>
       </div>
