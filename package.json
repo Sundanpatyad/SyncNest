@@ -1,14 +1,14 @@
 {
   "name": "syncnest",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "SyncNest — A premium cross-platform desktop SQL database browser for local SQLite files",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder",
-    "build:win": "tsc && vite build && electron-builder --win",
-    "build:mac": "tsc && vite build && electron-builder --mac",
-    "build:linux": "tsc && vite build && electron-builder --linux"
+    "build": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder",
+    "build:win": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder --win",
+    "build:mac": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder --mac",
+    "build:linux": "npx electron-rebuild -f -w better-sqlite3 && tsc && vite build && electron-builder --linux"
   },
   "build": {
     "appId": "com.sqlbrowser.app",
@@ -41,7 +41,11 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["arm64", "x64"]
+          "arch": ["arm64"]
+        },
+        {
+          "target": "dmg",
+          "arch": ["x64"]
         }
       ],
       "icon": "src/assets/icon.png",
