@@ -415,11 +415,20 @@ const App: React.FC = () => {
 
   if (!isAppVisible) {
     return <WelcomeScreen onOpenDatabase={(path) => {
-      try {
-        window.sqlBrowser.openDatabase(path);
-      } catch (error) {
-        console.error('Error opening database:', error);
+      console.log('Opening database from welcome screen:', path);
+      if (!path || typeof path !== 'string') {
+        console.error('Invalid database path:', path);
+        return;
       }
+      window.sqlBrowser.openDatabase(path).then((result) => {
+        if (result && result.error) {
+          console.error('Database open error:', result.error);
+          alert(`Error opening database: ${result.error}`);
+        }
+      }).catch((error) => {
+        console.error('Error opening database:', error);
+        alert(`Error opening database: ${error}`);
+      });
     }} />;
   }
 
