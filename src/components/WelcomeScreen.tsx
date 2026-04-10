@@ -16,9 +16,9 @@ interface WelcomeScreenProps {
 }
 
 const images = [
-  { src: 'src/assets/image1.jpg', title: 'Powerful Database Management', subtitle: 'Manage SQLite databases with ease' },
-  { src: 'src/assets/image2.jpg', title: 'Fast & Efficient', subtitle: 'Lightning-fast queries and data operations' },
-  { src: 'src/assets/image3.jpg', title: 'Beautiful Interface', subtitle: 'Clean, modern design for better productivity' }
+  { src: '/image1.jpg', title: 'Powerful Database Management', subtitle: 'Manage SQLite databases with ease' },
+  { src: '/image2.jpg', title: 'Fast & Efficient', subtitle: 'Lightning-fast queries and data operations' },
+  { src: '/image3.jpg', title: 'Beautiful Interface', subtitle: 'Clean, modern design for better productivity' }
 ];
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenDatabase }) => {
@@ -77,7 +77,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenDatabase }) => {
       {/* Left Side - Image Carousel */}
       <div className="welcome-left">
         <div className="welcome-left-logo">
-          <img src="src/assets/icon.png" alt="SyncNest" className="logo-icon" />
+          <img src="/icon.png" alt="SyncNest" className="logo-icon" />
           <span>SyncNest</span>
         </div>
         <button
@@ -205,7 +205,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenDatabase }) => {
         </div>
 
         <div className="welcome-byline">
-          <img src="src/assets/author.jpg" alt="Sundan Sharma" className="author-avatar" />
+          <img src="/author.jpg" alt="Sundan Sharma" className="author-avatar" />
           <span>Created by <strong>Sundan Sharma</strong></span>
         </div>
       </div>
