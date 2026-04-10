@@ -414,7 +414,13 @@ const App: React.FC = () => {
   };
 
   if (!isAppVisible) {
-    return <WelcomeScreen onOpenDatabase={(path) => window.sqlBrowser.openDatabase(path)} />;
+    return <WelcomeScreen onOpenDatabase={(path) => {
+      try {
+        window.sqlBrowser.openDatabase(path);
+      } catch (error) {
+        console.error('Error opening database:', error);
+      }
+    }} />;
   }
 
   return (

@@ -4,6 +4,7 @@ node_modules/
 # Builds
 build/
 dist/
+dist-electron/
 out/
 syncnest-windows-latest-build/
 
