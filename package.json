@@ -1,6 +1,6 @@
 {
   "name": "syncnest",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "SyncNest — A premium cross-platform desktop SQL database browser for local SQLite files",
   "main": "dist-electron/main.js",
   "scripts": {

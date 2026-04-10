@@ -105,7 +105,7 @@ const App: React.FC = () => {
   };
 
   // Debounce ref for loadTableData
-  const loadTableDataTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const loadTableDataTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadTableData = useCallback(async (options: any = {}) => {
     if (!tableDataStateRef.current.currentTable) return;
