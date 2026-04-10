@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import WelcomeScreen from './components/WelcomeScreen';
 import Sidebar from './components/Sidebar';
 import Toolbar from './components/Toolbar';
@@ -71,6 +71,8 @@ const App: React.FC = () => {
   
   // --- Toasts ---
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastsRef = useRef(toasts);
+  toastsRef.current = toasts;
 
   // --- Helpers ---
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -80,6 +82,17 @@ const App: React.FC = () => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 3000);
   }, []);
+
+  // Refs for loadTableData to avoid dependency changes
+  const tableDataStateRef = useRef({
+    currentPage,
+    pageSize,
+    sortCol,
+    sortDir,
+    searchQuery,
+    currentTable
+  });
+  tableDataStateRef.current = { currentPage, pageSize, sortCol, sortDir, searchQuery, currentTable };
 
   const guessPkColumn = (cols: any[]) => {
     const realPk = cols.find(c => c.pk === 1 || c.pk === true);
@@ -91,17 +104,27 @@ const App: React.FC = () => {
     return cols.length ? cols[0].name : null;
   };
 
+  // Debounce ref for loadTableData
+  const loadTableDataTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const loadTableData = useCallback(async (options: any = {}) => {
-    if (!currentTable) return;
+    if (!tableDataStateRef.current.currentTable) return;
+    
+    // Clear any pending load
+    if (loadTableDataTimeoutRef.current) {
+      clearTimeout(loadTableDataTimeoutRef.current);
+    }
+
     setIsLoading(true);
+    const state = tableDataStateRef.current;
     
     const params = {
-      table: currentTable!,
-      page: options.page || currentPage,
-      pageSize: options.pageSize || pageSize,
-      sortCol: (options.sortCol !== undefined ? options.sortCol : sortCol) ?? undefined,
-      sortDir: (options.sortDir !== undefined ? options.sortDir : sortDir) ?? undefined,
-      search: options.search !== undefined ? options.search : searchQuery,
+      table: state.currentTable!,
+      page: options.page || state.currentPage,
+      pageSize: options.pageSize || state.pageSize,
+      sortCol: (options.sortCol !== undefined ? options.sortCol : state.sortCol) ?? undefined,
+      sortDir: (options.sortDir !== undefined ? options.sortDir : state.sortDir) ?? undefined,
+      search: options.search !== undefined ? options.search : state.searchQuery,
     };
 
     const result = await window.sqlBrowser.getTableData(params);
@@ -116,7 +139,7 @@ const App: React.FC = () => {
     setRows(result.rows);
     setTotalRows(result.total);
     setPkColumn(guessPkColumn(result.columns));
-  }, [currentTable, currentPage, pageSize, sortCol, sortDir, searchQuery, showToast]);
+  }, [showToast]); // Only depend on showToast which is stable
 
   const selectTable = async (tableName: string) => {
     const tabId = `table-${tableName}`;
@@ -220,16 +243,28 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentTable, loadTableData]);
 
+  // Store callbacks in refs to avoid re-registering listeners
+  const callbacksRef = useRef({
+    loadTableData,
+    showToast,
+    currentTable
+  });
+  callbacksRef.current = { loadTableData, showToast, currentTable };
+
   useEffect(() => {
-    // DB Events
+    // DB Events - use refs to access latest callbacks without re-registering
     window.sqlBrowser.onDbOpened(async (data: any) => {
-      setDbName(data.name);
-      setTables(data.tables);
-      setTabs([]);
-      setActiveTabId(null);
-      setCurrentTable(null);
-      setActiveView('empty');
-      setIsAppVisible(true);
+      // Batch state updates - React 18+ auto-batches, for older versions use unstable_batchedUpdates
+      const batchedUpdates = (React as any).unstable_batchedUpdates || ((fn: Function) => fn());
+      batchedUpdates(() => {
+        setDbName(data.name);
+        setTables(data.tables);
+        setTabs([]);
+        setActiveTabId(null);
+        setCurrentTable(null);
+        setActiveView('empty');
+        setIsAppVisible(true);
+      });
       
       const info = await window.sqlBrowser.getDbInfo();
       if (!info.error) {
@@ -238,7 +273,7 @@ const App: React.FC = () => {
           sizeKb: (info.size / 1024).toFixed(1)
         });
       }
-      showToast(`Opened ${data.name}`, 'success');
+      callbacksRef.current.showToast(`Opened ${data.name}`, 'success');
     });
 
     window.sqlBrowser.onDbClosed(() => {
@@ -250,30 +285,47 @@ const App: React.FC = () => {
       setCurrentTable(null);
       setActiveView('empty');
       setIsAppVisible(false);
-      showToast('Database closed', 'info');
+      callbacksRef.current.showToast('Database closed', 'info');
     });
 
-    window.sqlBrowser.onDbError((msg: string) => showToast(`Error: ${msg}`, 'error'));
+    window.sqlBrowser.onDbError((msg: string) => callbacksRef.current.showToast(`Error: ${msg}`, 'error'));
     window.sqlBrowser.onShowAbout(() => setIsAboutOpen(true));
     window.sqlBrowser.onDbFileChanged(() => {
-      showToast('External change detected - reloading', 'info');
-      if (currentTable) loadTableData();
+      callbacksRef.current.showToast('External change detected - reloading', 'info');
+      if (callbacksRef.current.currentTable) {
+        callbacksRef.current.loadTableData();
+      }
     });
 
+    // Only remove listeners on unmount
     return () => {
-      window.sqlBrowser.removeAllListeners('onDbOpened');
-      window.sqlBrowser.removeAllListeners('onDbClosed');
-      window.sqlBrowser.removeAllListeners('onDbError');
-      window.sqlBrowser.removeAllListeners('onShowAbout');
-      window.sqlBrowser.removeAllListeners('onDbFileChanged');
+      window.sqlBrowser.removeAllListeners('db-opened');
+      window.sqlBrowser.removeAllListeners('db-closed');
+      window.sqlBrowser.removeAllListeners('db-error');
+      window.sqlBrowser.removeAllListeners('show-about');
+      window.sqlBrowser.removeAllListeners('db-file-changed');
     };
-  }, [currentTable, loadTableData, showToast]);
+  }, []); // Empty deps - only register once
 
+  // Optimized data loading - debounced and with proper cleanup
   useEffect(() => {
-    if (currentTable) {
-      loadTableData();
+    if (!currentTable) return;
+    
+    // Debounce the load to avoid multiple rapid calls
+    if (loadTableDataTimeoutRef.current) {
+      clearTimeout(loadTableDataTimeoutRef.current);
     }
-  }, [currentTable, currentPage, pageSize, sortCol, sortDir, searchQuery, loadTableData]);
+    
+    loadTableDataTimeoutRef.current = setTimeout(() => {
+      loadTableData();
+    }, 50); // Small debounce to batch rapid changes
+    
+    return () => {
+      if (loadTableDataTimeoutRef.current) {
+        clearTimeout(loadTableDataTimeoutRef.current);
+      }
+    };
+  }, [currentTable, currentPage, pageSize, sortCol, sortDir, searchQuery]); // Remove loadTableData from deps
 
   // --- Handlers ---
   const handleSort = (col: string) => {

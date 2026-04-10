@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FolderOpen, Database, RefreshCw, Search, FileCode, ChevronDown, X } from 'lucide-react';
+import { FolderOpen, Database, RefreshCw, Search, FileCode, ChevronRight, Globe } from 'lucide-react';
 
 interface DiscoveredDb {
   path: string;
@@ -15,14 +15,28 @@ interface WelcomeScreenProps {
   onOpenDatabase: (path: string) => void;
 }
 
+const images = [
+  { src: 'src/assets/image1.jpg', title: 'Powerful Database Management', subtitle: 'Manage SQLite databases with ease' },
+  { src: 'src/assets/image2.jpg', title: 'Fast & Efficient', subtitle: 'Lightning-fast queries and data operations' },
+  { src: 'src/assets/image3.jpg', title: 'Beautiful Interface', subtitle: 'Clean, modern design for better productivity' }
+];
+
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenDatabase }) => {
   const [discoveredDbs, setDiscoveredDbs] = useState<DiscoveredDb[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState(0);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     runScanning();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % images.length);
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const runScanning = async () => {
@@ -60,140 +74,141 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onOpenDatabase }) => {
 
   return (
     <div className="welcome-screen">
-      <div className="welcome-bg-glow"></div>
-      <div className="welcome-wrap">
-        {/* Main Card */}
-        <div className="welcome-card">
-          <div className="welcome-logo">
-            <div className="logo-icon">
-              <Database size={32} color="rgba(255,255,255,0.9)" />
-            </div>
-            <div className="logo-text">
-              <h1>SyncNest</h1>
-              <p>Local Database Explorer</p>
-            </div>
-          </div>
-
-          <div className="welcome-divider"></div>
-
-          <div className="welcome-actions">
-            <button
-              className="btn-primary btn-large"
-              onClick={() => window.sqlBrowser.openFileDialog()}
-            >
-              <FolderOpen size={15} strokeWidth={2.2} style={{ marginRight: '8px' }} />
-              Open Database File
-            </button>
-
-            <button
-              className="btn-secondary btn-large"
-              onClick={() => setIsModalOpen(true)}
-            >
-              <Database size={15} strokeWidth={2.2} style={{ marginRight: '8px' }} />
-              Local Databases
-              <ChevronDown size={14} style={{ marginLeft: '6px' }} />
-            </button>
-
-            <div
-              className="drop-zone"
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <FileCode size={18} strokeWidth={1.5} style={{ opacity: 0.5, color: '#4fc1ff' }} />
-              <p>Drop a <strong>.db</strong> or <strong>.sqlite</strong> file here</p>
-            </div>
-          </div>
-
-          <p className="welcome-byline">Created by <strong>Sundan Sharma</strong></p>
+      {/* Left Side - Image Carousel */}
+      <div className="welcome-left">
+        <div className="welcome-left-logo">
+          <img src="src/assets/icon.png" alt="SyncNest" className="logo-icon" />
+          <span>SyncNest</span>
+        </div>
+        <button
+          className="welcome-visit-btn"
+          onClick={() => window.open('https://github.com/Sundanpatyad/SyncNest', '_blank')}
+        >
+          <Globe size={14} />
+          Visit Website
+        </button>
+        <div className="welcome-carousel">
+          {images.map((img, index) => (
+            <img
+              key={img.src}
+              src={img.src}
+              alt={`Slide ${index + 1}`}
+              className={index === currentImage ? 'active' : ''}
+            />
+          ))}
+        </div>
+        <div className="welcome-carousel-text">
+          <h2>{images[currentImage].title}</h2>
+          <p>{images[currentImage].subtitle}</p>
+        </div>
+        <div className="welcome-left-dots">
+          {images.map((_, index) => (
+            <span
+              key={index}
+              className={`dot ${index === currentImage ? 'active' : ''}`}
+              onClick={() => setCurrentImage(index)}
+            />
+          ))}
         </div>
       </div>
 
-      {/* Database Modal */}
-      {isModalOpen && (
-        <div className="db-modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="db-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="db-modal-header">
-              <div className="db-modal-title">
-                <Database size={16} />
-                Local Databases
-                {isScanning && (
-                  <span className="scan-badge-inline">
-                    <span className="scan-dot"></span>
-                  </span>
-                )}
-              </div>
-              <div className="db-modal-header-right">
-                <span className="db-modal-count">
-                  {filteredDbs.length} database{filteredDbs.length !== 1 ? 's' : ''} found
-                </span>
-                <button
-                  className="db-modal-rescan-btn"
-                  onClick={runScanning}
-                  title="Re-scan"
-                  disabled={isScanning}
-                >
-                  <RefreshCw size={14} strokeWidth={2.5} className={isScanning ? 'spinning' : ''} />
-                </button>
-                <button
-                  className="db-modal-close-btn"
-                  onClick={() => setIsModalOpen(false)}
-                  title="Close"
-                >
-                  <X size={16} strokeWidth={2} />
-                </button>
-              </div>
+      {/* Right Side - Content */}
+      <div className="welcome-right">
+        <div className="welcome-right-header">
+          <h1>Open Database</h1>
+          <p>Select a database to get started</p>
+        </div>
+
+        <div className="welcome-actions">
+          <button
+            className="btn-primary btn-large"
+            onClick={() => window.sqlBrowser.openFileDialog()}
+          >
+            <FolderOpen size={16} strokeWidth={2} />
+            Browse File
+          </button>
+
+          <div className="divider">
+            <span>Or select from local databases</span>
+          </div>
+
+          <div className="local-dbs-section">
+            <div className="local-dbs-header">
+              <span className="local-dbs-title">
+                <Database size={14} />
+                Local Databases ({filteredDbs.length})
+              </span>
+              <button
+                className="rescan-btn"
+                onClick={runScanning}
+                disabled={isScanning}
+                title="Refresh"
+              >
+                <RefreshCw size={14} className={isScanning ? 'spinning' : ''} />
+              </button>
             </div>
 
-            <div className="db-modal-search">
+            <div className="local-dbs-search">
               <Search size={14} />
               <input
                 type="text"
-                placeholder="Filter databases..."
+                placeholder="Search databases..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                autoComplete="off"
-                autoFocus
               />
             </div>
 
-            <div className="db-modal-list">
+            <div className={`local-dbs-list ${showAll ? 'expanded' : ''}`}>
               {isScanning && discoveredDbs.length === 0 ? (
-                <div className="discovery-scanning">
-                  <div className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
-                  <span>Scanning...</span>
-                </div>
+                <div className="db-item scanning">Scanning...</div>
               ) : filteredDbs.length === 0 ? (
-                <div className="discovery-empty">
-                  <Database size={32} opacity={0.25} />
-                  {searchQuery ? `No databases matching "${searchQuery}"` : 'No databases found automatically.'}
+                <div className="db-item empty">
+                  {searchQuery ? 'No matches found' : 'No databases found'}
                 </div>
               ) : (
-                filteredDbs.map((db) => (
+                (showAll ? filteredDbs : filteredDbs.slice(0, 5)).map((db) => (
                   <div
                     key={db.path}
-                    className="discovery-card"
-                    onClick={() => {
-                      onOpenDatabase(db.path);
-                      setIsModalOpen(false);
-                    }}
+                    className="db-item"
+                    onClick={() => onOpenDatabase(db.path)}
                   >
-                    <div className="dc-info">
-                      <div className="dc-top">
-                        <div className="dc-name" title={db.name}>{db.name}</div>
-                        <div className="dc-source-badge">{db.source}</div>
-                      </div>
-                      <div className="dc-path-wrapper">
-                        <div className="dc-path" title={db.path}>{db.path}</div>
-                      </div>
+                    <div className="db-item-info">
+                      <span className="db-item-name">{db.name}</span>
+                      <span className="db-item-source">{db.source}</span>
                     </div>
+                    <ChevronRight size={14} />
                   </div>
                 ))
               )}
+              {filteredDbs.length > 5 && !showAll && (
+                <div className="db-item more" onClick={() => setShowAll(true)}>
+                  +{filteredDbs.length - 5} more databases
+                </div>
+              )}
+              {showAll && filteredDbs.length > 5 && (
+                <div className="db-item more" onClick={() => setShowAll(false)}>
+                  Show less
+                </div>
+              )}
             </div>
           </div>
+
+          <div
+            className="drop-zone"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <FileCode size={18} />
+            <p>Drop a <strong>.db</strong> or <strong>.sqlite</strong> file here</p>
+          </div>
         </div>
-      )}
+
+        <div className="welcome-byline">
+          <img src="src/assets/author.jpg" alt="Sundan Sharma" className="author-avatar" />
+          <span>Created by <strong>Sundan Sharma</strong></span>
+        </div>
+      </div>
     </div>
   );
 };

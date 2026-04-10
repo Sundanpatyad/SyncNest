@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Share2, RefreshCw, X } from 'lucide-react';
 
 const ER_COLORS = [
-  { bg: 'rgba(99,102,241,0.22)',  border: 'rgba(99,102,241,0.55)',  text: '#a5b4fc' },
-  { bg: 'rgba(20,184,166,0.18)',  border: 'rgba(20,184,166,0.5)',   text: '#5eead4' },
-  { bg: 'rgba(245,158,11,0.18)', border: 'rgba(245,158,11,0.5)',   text: '#fcd34d' },
-  { bg: 'rgba(239,68,68,0.18)',  border: 'rgba(239,68,68,0.5)',    text: '#fca5a5' },
-  { bg: 'rgba(139,92,246,0.22)', border: 'rgba(139,92,246,0.55)',  text: '#c4b5fd' },
-  { bg: 'rgba(14,165,233,0.18)', border: 'rgba(14,165,233,0.5)',   text: '#7dd3fc' },
-  { bg: 'rgba(236,72,153,0.18)', border: 'rgba(236,72,153,0.5)',   text: '#f9a8d4' },
-  { bg: 'rgba(132,204,22,0.15)', border: 'rgba(132,204,22,0.4)',   text: '#bef264' },
+  { bg: 'rgba(75,85,99,0.3)',  border: 'rgba(75,85,99,0.6)',  text: '#d1d5db' },
+  { bg: 'rgba(107,114,128,0.25)',  border: 'rgba(107,114,128,0.55)',   text: '#e5e7eb' },
+  { bg: 'rgba(55,65,81,0.3)', border: 'rgba(55,65,81,0.6)',   text: '#d1d5db' },
+  { bg: 'rgba(75,85,99,0.25)',  border: 'rgba(75,85,99,0.55)',    text: '#e5e7eb' },
+  { bg: 'rgba(107,114,128,0.3)', border: 'rgba(107,114,128,0.6)',  text: '#d1d5db' },
+  { bg: 'rgba(55,65,81,0.25)', border: 'rgba(55,65,81,0.55)',   text: '#e5e7eb' },
+  { bg: 'rgba(75,85,99,0.3)', border: 'rgba(75,85,99,0.6)',   text: '#d1d5db' },
+  { bg: 'rgba(107,114,128,0.25)', border: 'rgba(107,114,128,0.55)',   text: '#e5e7eb' },
 ];
 
 const ER_CARD_W = 224;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Database, Search, RefreshCw, FolderOpen, Terminal, Share2, X } from 'lucide-react';
+import { Search, RefreshCw, FolderOpen, Terminal, Share2, X } from 'lucide-react';
 
 interface TableInfo {
   name: string;
@@ -47,7 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="sidebar-header">
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">
-            <Database size={14} fill="rgba(255,255,255,0.92)" stroke="none" />
+            <img src="src/assets/icon.png" alt="SyncNest" className="sidebar-logo-img" />
           </div>
           <span className="sidebar-logo-text">SyncNest</span>
         </div>
