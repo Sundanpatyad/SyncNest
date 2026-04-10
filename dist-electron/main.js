@@ -2853,12 +2853,16 @@ var require_supports_color = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 	var tty$1 = require("tty");
 	var hasFlag = require_has_flag();
 	var { env } = process;
-	var forceColor;
-	if (hasFlag("no-color") || hasFlag("no-colors") || hasFlag("color=false") || hasFlag("color=never")) forceColor = 0;
-	else if (hasFlag("color") || hasFlag("colors") || hasFlag("color=true") || hasFlag("color=always")) forceColor = 1;
-	if ("FORCE_COLOR" in env) if (env.FORCE_COLOR === "true") forceColor = 1;
-	else if (env.FORCE_COLOR === "false") forceColor = 0;
-	else forceColor = env.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env.FORCE_COLOR, 10), 3);
+	var flagForceColor;
+	if (hasFlag("no-color") || hasFlag("no-colors") || hasFlag("color=false") || hasFlag("color=never")) flagForceColor = 0;
+	else if (hasFlag("color") || hasFlag("colors") || hasFlag("color=true") || hasFlag("color=always")) flagForceColor = 1;
+	function envForceColor() {
+		if ("FORCE_COLOR" in env) {
+			if (env.FORCE_COLOR === "true") return 1;
+			if (env.FORCE_COLOR === "false") return 0;
+			return env.FORCE_COLOR.length === 0 ? 1 : Math.min(Number.parseInt(env.FORCE_COLOR, 10), 3);
+		}
+	}
 	function translateLevel(level) {
 		if (level === 0) return false;
 		return {
@@ -2868,10 +2872,15 @@ var require_supports_color = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 			has16m: level >= 3
 		};
 	}
-	function supportsColor(haveStream, streamIsTTY) {
+	function supportsColor(haveStream, { streamIsTTY, sniffFlags = true } = {}) {
+		const noFlagForceColor = envForceColor();
+		if (noFlagForceColor !== void 0) flagForceColor = noFlagForceColor;
+		const forceColor = sniffFlags ? flagForceColor : noFlagForceColor;
 		if (forceColor === 0) return 0;
-		if (hasFlag("color=16m") || hasFlag("color=full") || hasFlag("color=truecolor")) return 3;
-		if (hasFlag("color=256")) return 2;
+		if (sniffFlags) {
+			if (hasFlag("color=16m") || hasFlag("color=full") || hasFlag("color=truecolor")) return 3;
+			if (hasFlag("color=256")) return 2;
+		}
 		if (haveStream && !streamIsTTY && forceColor === void 0) return 0;
 		const min = forceColor || 0;
 		if (env.TERM === "dumb") return min;
@@ -2887,14 +2896,15 @@ var require_supports_color = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 				"APPVEYOR",
 				"GITLAB_CI",
 				"GITHUB_ACTIONS",
-				"BUILDKITE"
+				"BUILDKITE",
+				"DRONE"
 			].some((sign) => sign in env) || env.CI_NAME === "codeship") return 1;
 			return min;
 		}
 		if ("TEAMCITY_VERSION" in env) return /^(9\.(0*[1-9]\d*)\.|\d{2,}\.)/.test(env.TEAMCITY_VERSION) ? 1 : 0;
 		if (env.COLORTERM === "truecolor") return 3;
 		if ("TERM_PROGRAM" in env) {
-			const version = parseInt((env.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
+			const version = Number.parseInt((env.TERM_PROGRAM_VERSION || "").split(".")[0], 10);
 			switch (env.TERM_PROGRAM) {
 				case "iTerm.app": return version >= 3 ? 3 : 2;
 				case "Apple_Terminal": return 2;
@@ -2905,13 +2915,16 @@ var require_supports_color = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 		if ("COLORTERM" in env) return 1;
 		return min;
 	}
-	function getSupportLevel(stream) {
-		return translateLevel(supportsColor(stream, stream && stream.isTTY));
+	function getSupportLevel(stream, options = {}) {
+		return translateLevel(supportsColor(stream, {
+			streamIsTTY: stream && stream.isTTY,
+			...options
+		}));
 	}
 	module.exports = {
 		supportsColor: getSupportLevel,
-		stdout: translateLevel(supportsColor(true, tty$1.isatty(1))),
-		stderr: translateLevel(supportsColor(true, tty$1.isatty(2)))
+		stdout: getSupportLevel({ isTTY: tty$1.isatty(1) }),
+		stderr: getSupportLevel({ isTTY: tty$1.isatty(2) })
 	};
 }));
 //#endregion
@@ -7578,7 +7591,7 @@ var require_main$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.Lazy = Lazy;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/internal/constants.js
+//#region node_modules/semver/internal/constants.js
 var require_constants = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SEMVER_SPEC_VERSION = "2.0.0";
 	var MAX_LENGTH = 256;
@@ -7603,12 +7616,12 @@ var require_constants = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/internal/debug.js
+//#region node_modules/semver/internal/debug.js
 var require_debug = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {};
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/internal/re.js
+//#region node_modules/semver/internal/re.js
 var require_re = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { MAX_SAFE_COMPONENT_LENGTH, MAX_SAFE_BUILD_LENGTH, MAX_LENGTH } = require_constants();
 	var debug = require_debug();
@@ -7687,7 +7700,7 @@ var require_re = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	createToken("GTE0PRE", "^\\s*>=\\s*0\\.0\\.0-0\\s*$");
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/internal/parse-options.js
+//#region node_modules/semver/internal/parse-options.js
 var require_parse_options = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var looseOption = Object.freeze({ loose: true });
 	var emptyOpts = Object.freeze({});
@@ -7699,7 +7712,7 @@ var require_parse_options = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 	module.exports = parseOptions;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/internal/identifiers.js
+//#region node_modules/semver/internal/identifiers.js
 var require_identifiers = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var numeric = /^[0-9]+$/;
 	var compareIdentifiers = (a, b) => {
@@ -7719,7 +7732,7 @@ var require_identifiers = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/classes/semver.js
+//#region node_modules/semver/classes/semver.js
 var require_semver$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var debug = require_debug();
 	var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants();
@@ -7897,7 +7910,7 @@ var require_semver$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/parse.js
+//#region node_modules/semver/functions/parse.js
 var require_parse = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var parse = (version, options, throwErrors = false) => {
@@ -7912,7 +7925,7 @@ var require_parse = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = parse;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/valid.js
+//#region node_modules/semver/functions/valid.js
 var require_valid$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var parse = require_parse();
 	var valid = (version, options) => {
@@ -7922,7 +7935,7 @@ var require_valid$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = valid;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/clean.js
+//#region node_modules/semver/functions/clean.js
 var require_clean = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var parse = require_parse();
 	var clean = (version, options) => {
@@ -7932,7 +7945,7 @@ var require_clean = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = clean;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/inc.js
+//#region node_modules/semver/functions/inc.js
 var require_inc = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var inc = (version, release, options, identifier, identifierBase) => {
@@ -7950,7 +7963,7 @@ var require_inc = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = inc;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/diff.js
+//#region node_modules/semver/functions/diff.js
 var require_diff = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var parse = require_parse();
 	var diff = (version1, version2) => {
@@ -7978,28 +7991,28 @@ var require_diff = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = diff;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/major.js
+//#region node_modules/semver/functions/major.js
 var require_major = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var major = (a, loose) => new SemVer(a, loose).major;
 	module.exports = major;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/minor.js
+//#region node_modules/semver/functions/minor.js
 var require_minor = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var minor = (a, loose) => new SemVer(a, loose).minor;
 	module.exports = minor;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/patch.js
+//#region node_modules/semver/functions/patch.js
 var require_patch = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var patch = (a, loose) => new SemVer(a, loose).patch;
 	module.exports = patch;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/prerelease.js
+//#region node_modules/semver/functions/prerelease.js
 var require_prerelease = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var parse = require_parse();
 	var prerelease = (version, options) => {
@@ -8009,28 +8022,28 @@ var require_prerelease = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = prerelease;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/compare.js
+//#region node_modules/semver/functions/compare.js
 var require_compare = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var compare = (a, b, loose) => new SemVer(a, loose).compare(new SemVer(b, loose));
 	module.exports = compare;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/rcompare.js
+//#region node_modules/semver/functions/rcompare.js
 var require_rcompare = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var rcompare = (a, b, loose) => compare(b, a, loose);
 	module.exports = rcompare;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/compare-loose.js
+//#region node_modules/semver/functions/compare-loose.js
 var require_compare_loose = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var compareLoose = (a, b) => compare(a, b, true);
 	module.exports = compareLoose;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/compare-build.js
+//#region node_modules/semver/functions/compare-build.js
 var require_compare_build = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var compareBuild = (a, b, loose) => {
@@ -8041,63 +8054,63 @@ var require_compare_build = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 	module.exports = compareBuild;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/sort.js
+//#region node_modules/semver/functions/sort.js
 var require_sort = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compareBuild = require_compare_build();
 	var sort = (list, loose) => list.sort((a, b) => compareBuild(a, b, loose));
 	module.exports = sort;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/rsort.js
+//#region node_modules/semver/functions/rsort.js
 var require_rsort = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compareBuild = require_compare_build();
 	var rsort = (list, loose) => list.sort((a, b) => compareBuild(b, a, loose));
 	module.exports = rsort;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/gt.js
+//#region node_modules/semver/functions/gt.js
 var require_gt = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var gt = (a, b, loose) => compare(a, b, loose) > 0;
 	module.exports = gt;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/lt.js
+//#region node_modules/semver/functions/lt.js
 var require_lt = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var lt = (a, b, loose) => compare(a, b, loose) < 0;
 	module.exports = lt;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/eq.js
+//#region node_modules/semver/functions/eq.js
 var require_eq = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var eq = (a, b, loose) => compare(a, b, loose) === 0;
 	module.exports = eq;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/neq.js
+//#region node_modules/semver/functions/neq.js
 var require_neq = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var neq = (a, b, loose) => compare(a, b, loose) !== 0;
 	module.exports = neq;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/gte.js
+//#region node_modules/semver/functions/gte.js
 var require_gte = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var gte = (a, b, loose) => compare(a, b, loose) >= 0;
 	module.exports = gte;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/lte.js
+//#region node_modules/semver/functions/lte.js
 var require_lte = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var lte = (a, b, loose) => compare(a, b, loose) <= 0;
 	module.exports = lte;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/cmp.js
+//#region node_modules/semver/functions/cmp.js
 var require_cmp = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var eq = require_eq();
 	var neq = require_neq();
@@ -8129,7 +8142,7 @@ var require_cmp = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = cmp;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/coerce.js
+//#region node_modules/semver/functions/coerce.js
 var require_coerce = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var parse = require_parse();
@@ -8157,7 +8170,7 @@ var require_coerce = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = coerce;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/internal/lrucache.js
+//#region node_modules/semver/internal/lrucache.js
 var require_lrucache = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var LRUCache = class {
 		constructor() {
@@ -8190,7 +8203,7 @@ var require_lrucache = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = LRUCache;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/classes/range.js
+//#region node_modules/semver/classes/range.js
 var require_range = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SPACE_CHARACTERS = /\s+/g;
 	module.exports = class Range {
@@ -8462,7 +8475,7 @@ var require_range = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/classes/comparator.js
+//#region node_modules/semver/classes/comparator.js
 var require_comparator = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var ANY = Symbol("SemVer ANY");
 	module.exports = class Comparator {
@@ -8532,7 +8545,7 @@ var require_comparator = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/functions/satisfies.js
+//#region node_modules/semver/functions/satisfies.js
 var require_satisfies = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 	var satisfies = (version, range, options) => {
@@ -8546,14 +8559,14 @@ var require_satisfies = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = satisfies;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/to-comparators.js
+//#region node_modules/semver/ranges/to-comparators.js
 var require_to_comparators = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 	var toComparators = (range, options) => new Range(range, options).set.map((comp) => comp.map((c) => c.value).join(" ").trim().split(" "));
 	module.exports = toComparators;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/max-satisfying.js
+//#region node_modules/semver/ranges/max-satisfying.js
 var require_max_satisfying = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var Range = require_range();
@@ -8579,7 +8592,7 @@ var require_max_satisfying = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 	module.exports = maxSatisfying;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/min-satisfying.js
+//#region node_modules/semver/ranges/min-satisfying.js
 var require_min_satisfying = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var Range = require_range();
@@ -8605,7 +8618,7 @@ var require_min_satisfying = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 	module.exports = minSatisfying;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/min-version.js
+//#region node_modules/semver/ranges/min-version.js
 var require_min_version = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var Range = require_range();
@@ -8645,7 +8658,7 @@ var require_min_version = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = minVersion;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/valid.js
+//#region node_modules/semver/ranges/valid.js
 var require_valid = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 	var validRange = (range, options) => {
@@ -8658,7 +8671,7 @@ var require_valid = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = validRange;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/outside.js
+//#region node_modules/semver/ranges/outside.js
 var require_outside = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var Comparator = require_comparator();
@@ -8711,21 +8724,21 @@ var require_outside = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = outside;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/gtr.js
+//#region node_modules/semver/ranges/gtr.js
 var require_gtr = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var outside = require_outside();
 	var gtr = (version, range, options) => outside(version, range, ">", options);
 	module.exports = gtr;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/ltr.js
+//#region node_modules/semver/ranges/ltr.js
 var require_ltr = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var outside = require_outside();
 	var ltr = (version, range, options) => outside(version, range, "<", options);
 	module.exports = ltr;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/intersects.js
+//#region node_modules/semver/ranges/intersects.js
 var require_intersects = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 	var intersects = (r1, r2, options) => {
@@ -8736,7 +8749,7 @@ var require_intersects = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = intersects;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/simplify.js
+//#region node_modules/semver/ranges/simplify.js
 var require_simplify = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var satisfies = require_satisfies();
 	var compare = require_compare();
@@ -8766,7 +8779,7 @@ var require_simplify = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/ranges/subset.js
+//#region node_modules/semver/ranges/subset.js
 var require_subset = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 	var Comparator = require_comparator();
@@ -8861,7 +8874,7 @@ var require_subset = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = subset;
 }));
 //#endregion
-//#region node_modules/electron-updater/node_modules/semver/index.js
+//#region node_modules/semver/index.js
 var require_semver = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var internalRe = require_re();
 	var constants = require_constants();

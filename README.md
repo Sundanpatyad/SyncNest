@@ -54,8 +54,10 @@ Official installers (`.exe` and `.dmg`) are built automatically when you push a 
 3. **Check the Build**: Head to your repository's **Actions** tab. GitHub will build the installers and automatically create a new **GitHub Release** with the downloads!
 
 ### Latest Download Links
-- **Windows (.exe)**: `https://github.com/Sundanpatyad/SyncNest/releases/latest/download/SyncNest.Setup.exe`
-- **macOS (.dmg)**: `https://github.com/Sundanpatyad/SyncNest/releases/latest/download/SyncNest.dmg`
+- **Windows (.exe)**: `https://github.com/Sundanpatyad/SyncNest/releases/latest/download/SyncNest-Setup.exe`
+- **macOS Apple Silicon (.dmg)**: `https://github.com/Sundanpatyad/SyncNest/releases/latest/download/SyncNest-arm64.dmg`
+- **macOS Intel (.dmg)**: `https://github.com/Sundanpatyad/SyncNest/releases/latest/download/SyncNest-x64.dmg`
+- **Linux**: `https://github.com/Sundanpatyad/SyncNest/releases/latest`
 
 ## 🔄 Auto-Update System
 
