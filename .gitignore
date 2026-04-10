@@ -28,7 +28,6 @@ data.json
 
 # Tooling
 .vscode/
-dist-electron/
 
 # Ignore specific root test output
 out.txt
